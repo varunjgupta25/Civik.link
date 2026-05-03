@@ -1,3 +1,0 @@
-Method,Name,Error,Occurrences
-GET,/api/health-data,HTTPError('401 Client Error: Unauthorized for url: /api/health-data'),164
-GET,/api/schemes,HTTPError('404 Client Error: Not Found for url: /api/schemes'),164
