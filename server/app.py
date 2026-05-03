@@ -183,10 +183,48 @@ def consume_otp(identifier: str, otp: str):
     OTP_STORE.pop(identifier, None)
 
 def send_otp(email: str, otp: str) -> str:
+    """Send OTP via Resend API (HTTPS — works on all cloud hosts including Render free tier)."""
+    resend_key = os.getenv("RESEND_API_KEY")
+
+    if resend_key:
+        try:
+            body = (
+                f"Hi,\n\n"
+                f"Your civik.link verification code is:\n\n"
+                f"  🔐  {otp}\n\n"
+                f"This code expires in 5 minutes.\n"
+                f"If you did not request this, please ignore this email.\n\n"
+                f"— The civik.link Team"
+            )
+            resp = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": "civik.link <onboarding@resend.dev>",
+                    "to": [email],
+                    "subject": f"{otp} is your civik.link verification code",
+                    "text": body,
+                },
+                timeout=15,
+            )
+            if resp.status_code in (200, 201):
+                return "email"
+            print(f"[AUTH] Resend error {resp.status_code}: {resp.text}")
+            raise HTTPException(status_code=502, detail="Could not send verification email")
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"[AUTH] Resend exception: {e}")
+            raise HTTPException(status_code=502, detail="Could not send verification email")
+
+    # Fallback: SMTP (for local development only)
     if not all([SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM]):
         if os.getenv("APP_ENV") == "production":
             raise HTTPException(status_code=500, detail="Email OTP is not configured")
-        print(f"[AUTH] Email OTP for {email}: {otp}")
+        print(f"[AUTH] ⚡ DEV MODE — OTP for {email}: {otp}")
         return "console"
 
     msg = EmailMessage()
@@ -197,7 +235,6 @@ def send_otp(email: str, otp: str) -> str:
         f"Your civik.link verification code is {otp}.\n\n"
         "This code expires in 5 minutes. If you did not request it, you can ignore this email."
     )
-
     try:
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
             server.starttls()
@@ -205,7 +242,7 @@ def send_otp(email: str, otp: str) -> str:
             server.send_message(msg)
         return "email"
     except Exception as e:
-        print(f"[AUTH] Failed to send OTP email to {email}: {e}")
+        print(f"[AUTH] SMTP failed for {email}: {e}")
         raise HTTPException(status_code=502, detail="Could not send verification email")
 
 def get_or_create_user(identifier: str) -> str:
