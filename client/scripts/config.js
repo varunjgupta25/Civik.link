@@ -7,7 +7,7 @@ const CONFIG = {
 
   // ── Data Source ────────────────────────────────────────────────────────────
   USE_MOCK_DATA: false,
-  API_BASE_URL: '/api',  // Used when USE_MOCK_DATA = false
+  API_BASE_URL: 'https://civik-backend-nydn.onrender.com',  // Production Backend
   MOCK_BASE_PATH: './mock',
 
   // ── App Identity ───────────────────────────────────────────────────────────
