@@ -23,6 +23,15 @@
 </head>
 <body>
 
+  <!-- Full Screen Splash Loader -->
+  <div id="splash-screen" style="position: fixed; inset: 0; background: var(--clr-primary, #0B5394); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.5s ease-out;">
+    <img src="/assets/logo.png" alt="civik.link logo" style="width: 80px; margin-bottom: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);" onerror="this.style.display='none'">
+    <h1 style="font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 700; margin-bottom: 10px;">civik.link</h1>
+    <div style="width: 200px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; margin-top: 20px;">
+      <div id="splash-bar" style="width: 0%; height: 100%; background: white; transition: width 1.5s ease-in-out;"></div>
+    </div>
+  </div>
+
   <!-- Skip to Content — keyboard accessibility -->
   <a href="#main-content" class="skip-link">Skip to main content</a>
 

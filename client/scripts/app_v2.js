@@ -42,10 +42,25 @@ const State = {
 async function boot() {
   console.log("[App] Booting...");
 
+  // Handle Splash Screen Animation
+  const splashScreen = document.getElementById('splash-screen');
+  const splashBar = document.getElementById('splash-bar');
+  if (splashScreen && splashBar) {
+    // Start progress bar animation
+    setTimeout(() => { splashBar.style.width = '100%'; }, 100);
+    
+    // Wait for animation to finish, then fade out
+    await new Promise(resolve => setTimeout(resolve, 1600));
+    splashScreen.style.opacity = '0';
+    
+    // Wait for fade out to finish, then remove from DOM
+    await new Promise(resolve => setTimeout(resolve, 500));
+    splashScreen.style.display = 'none';
+  }
+
+
   // STEP 1: If no valid auth cookie → show login screen immediately, done.
   if (!(await AuthService.isAuthenticated())) {
-    console.log("[App] Not authenticated → login screen");
-    try { await loadMockFallback(); } catch(e) {}
     renderLanding();
     return;
   }
