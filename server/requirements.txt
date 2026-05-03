@@ -4,3 +4,6 @@ PyJWT
 python-dotenv
 requests
 pydantic
+python-multipart
+psycopg2-binary
+gunicorn
