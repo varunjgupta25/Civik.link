@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-requests
-pyjwt
-python-dotenv
-python-multipart
-psycopg2-binary
