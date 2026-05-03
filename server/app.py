@@ -195,7 +195,7 @@ def send_otp(email: str, otp: str) -> str:
                     "Content-Type": "application/json",
                 },
                 json={
-                    "sender": {"name": "civik.link", "email": "civik.link.official@gmail.com"},
+                    "sender": {"name": "civik.link", "email": "onboarding@brevo.com"},
                     "to": [{"email": email}],
                     "subject": f"{otp} is your civik.link verification code",
                     "textContent": f"Hi,\n\nYour civik.link verification code is: {otp}\n\nThis code expires in 5 minutes.\n\n— The civik.link Team"
