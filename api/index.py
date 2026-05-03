@@ -83,27 +83,42 @@ def get_db():
 
 def init_db():
     conn = get_db()
-    # Use standard SQL that works on both SQLite and Postgres
-    queries = [
-        """CREATE TABLE IF NOT EXISTS users (
-            phone TEXT PRIMARY KEY,
-            udid TEXT,
-            profile_json TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )""",
-        """CREATE TABLE IF NOT EXISTS health_data (
-            phone       TEXT PRIMARY KEY,
-            health_json TEXT NOT NULL DEFAULT '{}',
-            updated_at  REAL NOT NULL
-        )"""
-    ]
-    # For Postgres, AUTOINCREMENT is SERIAL
-    if DB_URL:
-        pass # Adjustments for specific schemas if needed
-        
     c = conn.cursor()
-    for q in queries:
-        c.execute(q)
+    
+    # Tables for users and health
+    c.execute("""CREATE TABLE IF NOT EXISTS users (
+        phone TEXT PRIMARY KEY,
+        udid TEXT,
+        profile_json TEXT,
+        created_at TEXT
+    )""")
+    
+    c.execute("""CREATE TABLE IF NOT EXISTS health_data (
+        phone TEXT PRIMARY KEY,
+        health_json TEXT NOT NULL DEFAULT '{}',
+        updated_at REAL NOT NULL
+    )""")
+
+    # SOS Logs (different syntax for SQLite vs Postgres)
+    if DB_URL:
+        # PostgreSQL syntax
+        c.execute("""CREATE TABLE IF NOT EXISTS sos_logs (
+            id SERIAL PRIMARY KEY,
+            phone TEXT,
+            latitude REAL,
+            longitude REAL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""")
+    else:
+        # SQLite syntax
+        c.execute("""CREATE TABLE IF NOT EXISTS sos_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            phone TEXT,
+            latitude REAL,
+            longitude REAL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )""")
+        
     conn.commit()
     conn.close()
 
