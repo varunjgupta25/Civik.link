@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="civik.link Privacy Policy — How we collect, use, and protect your personal and health data.">
+  <title>Privacy Policy — civik.link</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --clr-primary: #0B5394;
+      --clr-accent:  #D9600A;
+      --clr-bg:      #FFFCF8;
+      --clr-surface: #FFFFFF;
+      --clr-text:    #1A1A2E;
+      --clr-muted:   #6B7280;
+      --clr-border:  #E5E7EB;
+      --radius:      12px;
+      --shadow:      0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--clr-bg);
+      color: var(--clr-text);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      background: var(--clr-primary);
+      color: white;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .site-header a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .site-header a:hover { opacity: 0.85; }
+
+    /* ── Hero Banner ── */
+    .hero {
+      background: linear-gradient(135deg, var(--clr-primary) 0%, #0d6ebd 100%);
+      color: white;
+      padding: 4rem 2rem 3rem;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .hero p {
+      font-size: 1.05rem;
+      opacity: 0.85;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .hero .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 50px;
+      padding: 0.3rem 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    /* ── Sections ── */
+    .section {
+      background: var(--clr-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid var(--clr-primary);
+    }
+    .section h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--clr-primary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section p { margin-bottom: 0.75rem; color: #374151; }
+    .section p:last-child { margin-bottom: 0; }
+    .section ul {
+      padding-left: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: #374151;
+    }
+    .section ul li { margin-bottom: 0.4rem; }
+
+    /* ── Highlight box ── */
+    .highlight {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      color: #1E40AF;
+    }
+
+    /* ── Table of Contents ── */
+    .toc {
+      background: var(--clr-surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+    }
+    .toc h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--clr-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .toc ol { padding-left: 1.25rem; }
+    .toc ol li { margin-bottom: 0.35rem; }
+    .toc a { color: var(--clr-primary); text-decoration: none; font-size: 0.95rem; }
+    .toc a:hover { text-decoration: underline; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--clr-muted);
+      font-size: 0.875rem;
+      border-top: 1px solid var(--clr-border);
+    }
+    footer a { color: var(--clr-primary); text-decoration: none; }
+
+    /* ── Back Button ── */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--clr-primary);
+      color: white;
+      text-decoration: none;
+      padding: 0.6rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      transition: background 0.2s;
+    }
+    .back-btn:hover { background: #084278; }
+
+    @media (max-width: 600px) {
+      .section { padding: 1.25rem; }
+      .hero { padding: 2.5rem 1rem 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <a href="/">🔗 civik.link</a>
+    <span style="opacity:0.5; margin-left: auto; font-size: 0.85rem; font-weight: 400;">Legal</span>
+  </header>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="badge">🔒 Your Privacy Matters</div>
+    <h1>Privacy Policy</h1>
+    <p>We are committed to protecting the personal and health data of every citizen who uses civik.link.</p>
+  </div>
+
+  <!-- Main Content -->
+  <main class="container" id="main-content">
+
+    <a href="/" class="back-btn">← Back to civik.link</a>
+
+    <!-- Last Updated -->
+    <p style="color: var(--clr-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+      <strong>Last Updated:</strong> May 3, 2026 &nbsp;|&nbsp;
+      <strong>Effective Date:</strong> May 3, 2026 &nbsp;|&nbsp;
+      <strong>Version:</strong> 1.0
+    </p>
+
+    <!-- Table of Contents -->
+    <div class="toc">
+      <h3>Contents</h3>
+      <ol>
+        <li><a href="#who-we-are">Who We Are</a></li>
+        <li><a href="#what-we-collect">What Data We Collect</a></li>
+        <li><a href="#how-we-use">How We Use Your Data</a></li>
+        <li><a href="#ai-data">AI Processing & Groq</a></li>
+        <li><a href="#storage">Data Storage & Security</a></li>
+        <li><a href="#sharing">Data Sharing</a></li>
+        <li><a href="#your-rights">Your Rights</a></li>
+        <li><a href="#children">Children's Privacy</a></li>
+        <li><a href="#retention">Data Retention</a></li>
+        <li><a href="#contact">Contact Us</a></li>
+      </ol>
+    </div>
+
+    <!-- 1. Who We Are -->
+    <div class="section" id="who-we-are">
+      <h2>1. Who We Are</h2>
+      <p>civik.link ("we", "our", or "the Platform") is a civic technology platform designed to empower elderly citizens, differently-abled individuals, and underserved communities in India. We provide AI-powered health monitoring, access to government welfare schemes, and an Emergency SOS system.</p>
+      <p>This Privacy Policy applies to all services offered through <strong>https://civik-backend-nydn.onrender.com</strong> and any future domains associated with civik.link.</p>
+    </div>
+
+    <!-- 2. What We Collect -->
+    <div class="section" id="what-we-collect">
+      <h2>2. What Data We Collect</h2>
+      <p>We collect only the minimum data necessary to provide our services. We do <strong>not</strong> collect data that is not required for app functionality.</p>
+
+      <p><strong>a) Account Data (Required)</strong></p>
+      <ul>
+        <li>Email address — used as your unique login identifier</li>
+        <li>A unique User ID (UDID) — auto-generated from your email, e.g. CVLK-A3F9-2B7E</li>
+        <li>Account creation timestamp</li>
+      </ul>
+
+      <p><strong>b) Profile Data (You provide voluntarily)</strong></p>
+      <ul>
+        <li>Full name</li>
+        <li>Phone number</li>
+        <li>Age, gender, state of residence</li>
+        <li>Income bracket (for scheme eligibility)</li>
+      </ul>
+
+      <p><strong>c) Health Data (You provide voluntarily)</strong></p>
+      <ul>
+        <li>Blood pressure, blood sugar, weight readings</li>
+        <li>Medications and health conditions</li>
+        <li>Doctor's notes entered by you</li>
+      </ul>
+
+      <p><strong>d) Emergency Contact Data (You provide voluntarily)</strong></p>
+      <ul>
+        <li>Name, phone number, and relationship of your emergency contacts</li>
+      </ul>
+
+      <p><strong>e) Technical Data (Automatically collected)</strong></p>
+      <ul>
+        <li>Browser type and version</li>
+        <li>Operating system</li>
+        <li>Timestamp of login sessions</li>
+      </ul>
+
+      <div class="highlight">
+        We do <strong>not</strong> collect passwords, payment information, biometric data, location coordinates, or government identity numbers (Aadhaar, PAN).
+      </div>
+    </div>
+
+    <!-- 3. How We Use Your Data -->
+    <div class="section" id="how-we-use">
+      <h2>3. How We Use Your Data</h2>
+      <p>Your data is used exclusively to provide and improve the civik.link platform:</p>
+      <ul>
+        <li><strong>Authentication:</strong> Your email is used to send a One-Time Password (OTP) to verify your identity</li>
+        <li><strong>Personalization:</strong> Your profile data is used to personalise your dashboard and government scheme recommendations</li>
+        <li><strong>Health Monitoring:</strong> Your health readings are displayed back to you on your private dashboard</li>
+        <li><strong>Emergency SOS:</strong> Your emergency contact information is used to pre-fill the WhatsApp SOS message when you activate it</li>
+        <li><strong>AI Assistance:</strong> Your health and profile data is sent to our AI service (Groq) to generate personalised responses to your queries</li>
+        <li><strong>Service Improvement:</strong> Aggregated, anonymised usage data may be used to improve the platform</li>
+      </ul>
+      <p>We do <strong>not</strong> use your data for advertising, sell it to third parties, or use it for any purpose not listed above.</p>
+    </div>
+
+    <!-- 4. AI Processing -->
+    <div class="section" id="ai-data">
+      <h2>4. AI Processing & Third-Party Services</h2>
+      <p>When you use the <strong>AI Assistant</strong> feature, your health context and chat messages are transmitted to <strong>Groq, Inc.</strong> (USA) to generate a response. This data is processed in real time and is not stored by Groq for training purposes under their standard API terms.</p>
+      <p>We recommend you do not share highly sensitive medical details (e.g. specific diagnoses or medications) in the AI chat if you are concerned about third-party processing.</p>
+      <p><strong>OTP Delivery:</strong> When you log in, your email address is transmitted to Gmail's SMTP servers (Google LLC) solely to deliver your login verification code.</p>
+      <p><strong>Emergency SOS:</strong> When you activate SOS, the app opens WhatsApp on your device. This action is performed locally on your phone — we do not transmit any data to WhatsApp servers ourselves.</p>
+    </div>
+
+    <!-- 5. Data Storage -->
+    <div class="section" id="storage">
+      <h2>5. Data Storage & Security</h2>
+      <p>Your data is stored in a secure database on servers hosted by <strong>Render.com</strong> (USA). Render maintains industry-standard security certifications.</p>
+      <p><strong>Encryption:</strong> All data transmitted between your device and our servers is encrypted using HTTPS/TLS. Your login sessions are secured using JWT (JSON Web Token) technology.</p>
+      <p><strong>Access Control:</strong> Your health data and profile are only accessible with your valid session token. No employee or third party has routine access to your data.</p>
+      <p><strong>Passwords:</strong> civik.link uses a passwordless OTP system. We never store passwords.</p>
+
+      <div class="highlight">
+        ⚠️ <strong>Current Limitation:</strong> civik.link is currently in Version 1.0 running on a free hosting tier. Data backups are not yet fully automated. We recommend not storing irreplaceable medical records exclusively on this platform at this stage.
+      </div>
+    </div>
+
+    <!-- 6. Sharing -->
+    <div class="section" id="sharing">
+      <h2>6. Data Sharing</h2>
+      <p>We share your data only in the following limited circumstances:</p>
+      <ul>
+        <li><strong>Groq, Inc.:</strong> AI query processing (see Section 4)</li>
+        <li><strong>Google LLC:</strong> OTP email delivery via Gmail SMTP</li>
+        <li><strong>Render.com:</strong> Hosting and infrastructure provider</li>
+        <li><strong>Legal Requirement:</strong> If required by applicable Indian law, court order, or government authority</li>
+      </ul>
+      <p>We <strong>never sell, rent, or trade</strong> your personal or health data to any commercial third party, advertiser, or data broker.</p>
+    </div>
+
+    <!-- 7. Your Rights -->
+    <div class="section" id="your-rights">
+      <h2>7. Your Rights</h2>
+      <p>Under India's <strong>Digital Personal Data Protection Act, 2023 (DPDPA)</strong> and applicable privacy standards, you have the following rights:</p>
+      <ul>
+        <li><strong>Right to Access:</strong> You can request a copy of all personal data we hold about you</li>
+        <li><strong>Right to Correction:</strong> You can update or correct your profile data directly within the app at any time</li>
+        <li><strong>Right to Erasure:</strong> You can request complete deletion of your account and all associated data</li>
+        <li><strong>Right to Grievance:</strong> You can raise a complaint about our data practices</li>
+        <li><strong>Right to Withdraw Consent:</strong> You may withdraw consent for non-essential data processing at any time</li>
+      </ul>
+      <p>To exercise any of these rights, please contact us at <a href="mailto:civik.link.official@gmail.com">civik.link.official@gmail.com</a>. We will respond within 30 days.</p>
+    </div>
+
+    <!-- 8. Children -->
+    <div class="section" id="children">
+      <h2>8. Children's Privacy</h2>
+      <p>civik.link is not directed at children under the age of 13. We do not knowingly collect personal data from children under 13. If you believe a child under 13 has provided us with personal data, please contact us immediately and we will delete it.</p>
+    </div>
+
+    <!-- 9. Retention -->
+    <div class="section" id="retention">
+      <h2>9. Data Retention</h2>
+      <p>We retain your account data for as long as your account is active or as needed to provide you services. If you request account deletion, we will erase all personally identifiable data within 30 days.</p>
+      <p>Anonymised, aggregated data (e.g. total number of users) may be retained indefinitely for platform analytics.</p>
+    </div>
+
+    <!-- 10. Contact -->
+    <div class="section" id="contact">
+      <h2>10. Contact Us</h2>
+      <p>If you have questions, concerns, or requests regarding this Privacy Policy or how we handle your data, please contact us:</p>
+      <ul>
+        <li><strong>Email:</strong> <a href="mailto:civik.link.official@gmail.com">civik.link.official@gmail.com</a></li>
+        <li><strong>Platform:</strong> civik.link</li>
+        <li><strong>Response Time:</strong> Within 30 business days</li>
+      </ul>
+      <p>For urgent data-related concerns, please mark your email subject line: <strong>"Privacy Request — Urgent"</strong></p>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2026 civik.link — All rights reserved. &nbsp;|&nbsp; <a href="/">Return to App</a> &nbsp;|&nbsp; <a href="/terms.html">Terms of Service</a></p>
+    <p style="margin-top:0.5rem;">Empowering Every Citizen · Built with ❤️ for India</p>
+  </footer>
+
+</body>
+</html>
