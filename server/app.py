@@ -183,67 +183,39 @@ def consume_otp(identifier: str, otp: str):
     OTP_STORE.pop(identifier, None)
 
 def send_otp(email: str, otp: str) -> str:
-    """Send OTP via Resend API (HTTPS — works on all cloud hosts including Render free tier)."""
-    resend_key = os.getenv("RESEND_API_KEY")
+    """Send OTP via Brevo API (HTTPS — bypasses Render port blocks)."""
+    brevo_key = os.getenv("BREVO_API_KEY")
 
-    if resend_key:
+    if brevo_key:
         try:
-            body = (
-                f"Hi,\n\n"
-                f"Your civik.link verification code is:\n\n"
-                f"  🔐  {otp}\n\n"
-                f"This code expires in 5 minutes.\n"
-                f"If you did not request this, please ignore this email.\n\n"
-                f"— The civik.link Team"
-            )
             resp = requests.post(
-                "https://api.resend.com/emails",
+                "https://api.brevo.com/v3/smtp/email",
                 headers={
-                    "Authorization": f"Bearer {resend_key}",
+                    "api-key": brevo_key,
                     "Content-Type": "application/json",
                 },
                 json={
-                    "from": "civik.link <onboarding@resend.dev>",
-                    "to": [email],
+                    "sender": {"name": "civik.link", "email": "civik.link.official@gmail.com"},
+                    "to": [{"email": email}],
                     "subject": f"{otp} is your civik.link verification code",
-                    "text": body,
+                    "textContent": f"Hi,\n\nYour civik.link verification code is: {otp}\n\nThis code expires in 5 minutes.\n\n— The civik.link Team"
                 },
                 timeout=15,
             )
-            if resp.status_code in (200, 201):
+            if resp.status_code in (200, 201, 202):
                 return "email"
-            print(f"[AUTH] Resend error {resp.status_code}: {resp.text}")
-            raise HTTPException(status_code=502, detail="Could not send verification email")
-        except HTTPException:
-            raise
+            print(f"[AUTH] Brevo error {resp.status_code}: {resp.text}")
+            raise HTTPException(status_code=502, detail="Email service error")
         except Exception as e:
-            print(f"[AUTH] Resend exception: {e}")
+            print(f"[AUTH] Brevo exception: {e}")
             raise HTTPException(status_code=502, detail="Could not send verification email")
 
-    # Fallback: SMTP (for local development only)
-    if not all([SMTP_HOST, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM]):
-        if os.getenv("APP_ENV") == "production":
-            raise HTTPException(status_code=500, detail="Email OTP is not configured")
+    # Fallback for local testing (No email sent, just printed to console)
+    if os.getenv("APP_ENV") != "production":
         print(f"[AUTH] ⚡ DEV MODE — OTP for {email}: {otp}")
         return "console"
-
-    msg = EmailMessage()
-    msg["Subject"] = "Your civik.link verification code"
-    msg["From"] = SMTP_FROM
-    msg["To"] = email
-    msg.set_content(
-        f"Your civik.link verification code is {otp}.\n\n"
-        "This code expires in 5 minutes. If you did not request it, you can ignore this email."
-    )
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
-            server.starttls()
-            server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.send_message(msg)
-        return "email"
-    except Exception as e:
-        print(f"[AUTH] SMTP failed for {email}: {e}")
-        raise HTTPException(status_code=502, detail="Could not send verification email")
+    
+    raise HTTPException(status_code=500, detail="Email service not configured")
 
 def get_or_create_user(identifier: str) -> str:
     conn = get_db()
