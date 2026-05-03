@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="About civik.link — Meet Varun Gupta, the developer behind India's civic AI platform. Get support and learn our story.">
+  <title>About Us & Support — civik.link</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #0B5394; --primary-dark: #084278;
+      --accent: #D9600A; --accent-light: #FFF7ED;
+      --bg: #FFFCF8; --surface: #FFFFFF;
+      --text: #1A1A2E; --muted: #6B7280;
+      --border: #E5E7EB; --radius: 14px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+
+    /* Header */
+    .site-header { background: var(--primary); color: white; padding: 1.1rem 2rem; display: flex; align-items: center; }
+    .site-header a { color: white; text-decoration: none; font-weight: 700; font-size: 1.2rem; }
+    .site-header a:hover { opacity: 0.85; }
+    .site-header span { margin-left: auto; font-size: 0.85rem; opacity: 0.6; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(145deg, #0B5394 0%, #0d6ebd 60%, #D9600A 100%);
+      color: white; padding: 5rem 2rem 4rem; text-align: center; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(217,96,10,0.25) 0%, transparent 60%);
+    }
+    .hero-badge { display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 50px; padding: 0.35rem 1.1rem; font-size: 0.85rem; margin-bottom: 1.25rem; position: relative; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; margin-bottom: 1rem; line-height: 1.2; position: relative; }
+    .hero p { font-size: 1.1rem; opacity: 0.88; max-width: 580px; margin: 0 auto; position: relative; }
+
+    /* Container */
+    .container { max-width: 900px; margin: 0 auto; padding: 3.5rem 1.5rem 5rem; }
+
+    /* Stat bar */
+    .stat-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 3rem; }
+    .stat-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; text-align: center; border-top: 3px solid var(--primary); }
+    .stat-card .num { font-size: 2rem; font-weight: 800; color: var(--primary); }
+    .stat-card .label { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* Section cards */
+    .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2.25rem; margin-bottom: 1.75rem; }
+    .card-accent { border-left: 4px solid var(--accent); }
+    .card-primary { border-left: 4px solid var(--primary); }
+
+    .section-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+    .section-title { font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 1rem; }
+    .section-body { color: #374151; font-size: 1rem; }
+    .section-body p { margin-bottom: 0.85rem; }
+    .section-body p:last-child { margin-bottom: 0; }
+
+    /* Avatar placeholder */
+    .founder-row { display: flex; gap: 2rem; align-items: flex-start; }
+    .avatar-box {
+      flex-shrink: 0; width: 100px; height: 100px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #0d6ebd);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem; font-weight: 800; color: white;
+      box-shadow: 0 4px 16px rgba(11,83,148,0.3);
+    }
+    .founder-info h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .founder-info .role { font-size: 0.9rem; color: var(--accent); font-weight: 600; margin-bottom: 0.5rem; }
+    .founder-info .location { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.85rem; }
+    .linkedin-btn {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: #0A66C2; color: white; text-decoration: none;
+      padding: 0.45rem 1rem; border-radius: 8px; font-size: 0.875rem; font-weight: 600;
+      transition: background 0.2s;
+    }
+    .linkedin-btn:hover { background: #004182; }
+
+    /* Story */
+    .story-text { color: #374151; font-size: 1rem; }
+    .story-text p { margin-bottom: 1rem; }
+    .story-text p:last-child { margin-bottom: 0; }
+
+    /* Values grid */
+    .values-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+    .value-card { background: #F0F7FF; border-radius: 10px; padding: 1.1rem; }
+    .value-card .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .value-card h4 { font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 0.25rem; }
+    .value-card p { font-size: 0.85rem; color: var(--muted); }
+
+    /* Tech stack */
+    .tech-pills { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+    .pill { background: #EFF6FF; color: var(--primary); border: 1px solid #BFDBFE; border-radius: 50px; padding: 0.3rem 0.85rem; font-size: 0.82rem; font-weight: 600; }
+
+    /* Support section */
+    .support-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; margin-top: 1.25rem; }
+    .support-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; transition: box-shadow 0.2s, border-color 0.2s; }
+    .support-card:hover { box-shadow: var(--shadow); border-color: var(--primary); }
+    .support-card .s-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .support-card h4 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .support-card p { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.75rem; }
+    .support-card a { color: var(--primary); font-weight: 600; font-size: 0.9rem; text-decoration: none; word-break: break-all; }
+    .support-card a:hover { text-decoration: underline; }
+    .support-card .badge { display: inline-block; background: #DCFCE7; color: #166534; border-radius: 50px; padding: 0.15rem 0.6rem; font-size: 0.75rem; font-weight: 600; margin-top: 0.4rem; }
+
+    /* Contact form */
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text); }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%; padding: 0.7rem 1rem; border: 1.5px solid var(--border); border-radius: 8px;
+      font-family: 'Outfit', sans-serif; font-size: 0.95rem; color: var(--text);
+      background: var(--bg); transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--primary); }
+    .form-group textarea { resize: vertical; min-height: 110px; }
+    .submit-btn {
+      background: var(--primary); color: white; border: none; padding: 0.8rem 2rem;
+      border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer;
+      font-family: 'Outfit', sans-serif; width: 100%; transition: background 0.2s;
+    }
+    .submit-btn:hover { background: var(--primary-dark); }
+    .form-note { font-size: 0.82rem; color: var(--muted); margin-top: 0.75rem; text-align: center; }
+
+    /* Footer */
+    footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.875rem; border-top: 1px solid var(--border); }
+    footer a { color: var(--primary); text-decoration: none; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .founder-row { flex-direction: column; }
+      .stat-bar { grid-template-columns: repeat(3, 1fr); }
+      .stat-card .num { font-size: 1.5rem; }
+      .card { padding: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="/">🔗 civik.link</a>
+  <span>About & Support</span>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">🇮🇳 Built for India's Citizens</div>
+  <h1>The Story Behind civik.link</h1>
+  <p>A student's mission to put the power of AI into the hands of every Indian citizen — regardless of age, ability, or income.</p>
+</div>
+
+<main class="container" id="main-content">
+
+  <a href="/" style="display:inline-flex;align-items:center;gap:0.5rem;background:var(--primary);color:white;text-decoration:none;padding:0.6rem 1.25rem;border-radius:8px;font-size:0.9rem;font-weight:500;margin-bottom:2.5rem;transition:background 0.2s;" onmouseover="this.style.background='#084278'" onmouseout="this.style.background='#0B5394'">← Back to App</a>
+
+  <!-- Stats -->
+  <div class="stat-bar">
+    <div class="stat-card">
+      <div class="num">4</div>
+      <div class="label">Core Features</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">1K+</div>
+      <div class="label">Users Simulated</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">0%</div>
+      <div class="label">Feature Failures</div>
+    </div>
+  </div>
+
+  <!-- Founder -->
+  <div class="card card-accent">
+    <div class="section-label">The Founder</div>
+    <div class="founder-row">
+      <div class="avatar-box">VG</div>
+      <div class="founder-info">
+        <h3>Varun Jayshankar Gupta</h3>
+        <div class="role">Founder & Full-Stack Developer · civik.link</div>
+        <div class="location">📍 Mumbai, Maharashtra, India</div>
+        <a href="https://www.linkedin.com/in/varun-jayshankar-gupta-0b4a6b339" target="_blank" rel="noopener" class="linkedin-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          Connect on LinkedIn
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Our Story -->
+  <div class="card card-primary">
+    <div class="section-label">Our Story</div>
+    <div class="section-title">From a College Project to a Live Civic Platform</div>
+    <div class="story-text">
+      <p>civik.link began as a college project — but somewhere between writing the first line of code and watching the splash screen load on a real phone, it became something much bigger than an assignment.</p>
+      <p>Varun Gupta, a Computer Science engineering student at Mumbai's Shree L.R. Tiwari College of Engineering, built civik.link with a simple but powerful observation: India's elderly and differently-abled citizens are often the most entitled to government welfare, yet the least equipped to access it. Scheme portals are complex, medical records are scattered across paper slips, and in an emergency, precious seconds are lost fumbling through contacts.</p>
+      <p>civik.link was built to fix that. In just a few months of development — learning full-stack architecture, integrating Groq AI, and deploying to a live production server — Varun shipped a complete, tested, and accessible platform that puts AI-powered health monitoring, government scheme discovery, and one-tap emergency SOS into the hands of every citizen.</p>
+      <p>This is Version 1.0. The mission has just begun.</p>
+    </div>
+  </div>
+
+  <!-- Our Values -->
+  <div class="card">
+    <div class="section-label">What We Stand For</div>
+    <div class="section-title">Our Values</div>
+    <div class="values-grid">
+      <div class="value-card">
+        <div class="icon">♿</div>
+        <h4>Accessibility First</h4>
+        <p>Built for elderly and differently-abled users — TTS, large fonts, high contrast, and screen reader support built in from day one.</p>
+      </div>
+      <div class="value-card">
+        <div class="icon">🔒</div>
+        <h4>Privacy by Design</h4>
+        <p>No passwords stored. OTP-only login. Your health data belongs to you and only you.</p>
+      </div>
+      <div class="value-card">
+        <div class="icon">🤝</div>
+        <h4>Citizen First</h4>
+        <p>Every feature is designed with real citizens in mind — not tech enthusiasts. Simple. Clear. Useful.</p>
+      </div>
+      <div class="value-card">
+        <div class="icon">🌱</div>
+        <h4>Open & Honest</h4>
+        <p>We are transparent about what we are, what we collect, and where we are in our journey.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Stack -->
+  <div class="card">
+    <div class="section-label">Under the Hood</div>
+    <div class="section-title">Built With</div>
+    <p style="color:var(--muted); font-size:0.95rem;">civik.link is engineered with modern, production-grade technology — the same stack used by professional engineering teams worldwide.</p>
+    <div class="tech-pills">
+      <span class="pill">FastAPI (Python)</span>
+      <span class="pill">Groq AI / LLaMA</span>
+      <span class="pill">JWT Auth</span>
+      <span class="pill">SQLite</span>
+      <span class="pill">Vanilla JS SPA</span>
+      <span class="pill">Custom CSS Design System</span>
+      <span class="pill">Render.com</span>
+      <span class="pill">GitHub CI/CD</span>
+      <span class="pill">SMTP OTP</span>
+      <span class="pill">Web Speech API</span>
+      <span class="pill">WCAG AA Accessible</span>
+    </div>
+  </div>
+
+  <!-- Support Channels -->
+  <div class="card card-accent">
+    <div class="section-label">Need Help?</div>
+    <div class="section-title">Support Channels</div>
+    <p style="color:var(--muted);font-size:0.95rem;">We are a small but committed team. Every message is read personally by the founder.</p>
+    <div class="support-grid">
+      <div class="support-card">
+        <div class="s-icon">📧</div>
+        <h4>Official Support Email</h4>
+        <p>For account issues, data requests, bug reports, or general help.</p>
+        <a href="mailto:civik.link.official@gmail.com">civik.link.official@gmail.com</a>
+        <br><span class="badge">Replies within 48 hours</span>
+      </div>
+      <div class="support-card">
+        <div class="s-icon">🎓</div>
+        <h4>Developer Contact</h4>
+        <p>For technical collaborations, partnership enquiries, or feedback for the developer.</p>
+        <a href="mailto:varun.j.gupta25@slrtce.in">varun.j.gupta25@slrtce.in</a>
+        <br><span class="badge">Academic & Tech Queries</span>
+      </div>
+      <div class="support-card">
+        <div class="s-icon">💼</div>
+        <h4>LinkedIn</h4>
+        <p>Connect with Varun professionally for collaborations, feedback, or networking.</p>
+        <a href="https://www.linkedin.com/in/varun-jayshankar-gupta-0b4a6b339" target="_blank" rel="noopener">View LinkedIn Profile →</a>
+        <br><span class="badge">Professional Enquiries</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Form -->
+  <div class="card">
+    <div class="section-label">Send a Message</div>
+    <div class="section-title">Contact Us Directly</div>
+    <p style="color:var(--muted);font-size:0.95rem;margin-bottom:1.5rem;">Fill out the form below and we will get back to you within 48 hours.</p>
+
+    <form action="mailto:civik.link.official@gmail.com" method="GET" enctype="text/plain">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label for="contact-name">Your Name</label>
+          <input type="text" id="contact-name" name="name" placeholder="e.g. Priya Sharma" required>
+        </div>
+        <div class="form-group">
+          <label for="contact-email">Your Email</label>
+          <input type="email" id="contact-email" name="email" placeholder="your@email.com" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="contact-type">Type of Enquiry</label>
+        <select id="contact-type" name="subject">
+          <option value="General Support">General Support</option>
+          <option value="Account Issue">Account Issue / Login Problem</option>
+          <option value="Feature Request">Feature Request</option>
+          <option value="Bug Report">Bug Report</option>
+          <option value="Data Request">Data / Privacy Request</option>
+          <option value="Partnership">Partnership / Collaboration</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="contact-message">Your Message</label>
+        <textarea id="contact-message" name="body" placeholder="Tell us how we can help you..." required></textarea>
+      </div>
+      <button type="submit" class="submit-btn">Send Message →</button>
+      <p class="form-note">This will open your email app with your message pre-filled. We respond within 48 hours on business days (Mon–Fri, IST).</p>
+    </form>
+  </div>
+
+  <!-- Legal Links -->
+  <div style="text-align:center;padding:1.5rem;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);">
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:0.75rem;">Legal & Policies</p>
+    <div style="display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap;">
+      <a href="/privacy.html" style="color:var(--primary);text-decoration:none;font-size:0.9rem;font-weight:600;">🔒 Privacy Policy</a>
+      <a href="/terms.html" style="color:var(--primary);text-decoration:none;font-size:0.9rem;font-weight:600;">📋 Terms of Service</a>
+      <a href="/" style="color:var(--primary);text-decoration:none;font-size:0.9rem;font-weight:600;">🏠 Return to App</a>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>© 2026 civik.link · Built by <a href="https://www.linkedin.com/in/varun-jayshankar-gupta-0b4a6b339" target="_blank">Varun Gupta</a> · Mumbai, India</p>
+  <p style="margin-top:0.4rem;">Empowering Every Citizen · Made with ❤️ for India</p>
+</footer>
+
+</body>
+</html>
