@@ -1,3 +1,7 @@
+"""
+civik.link — Production Backend (Python/FastAPI)
+Stability Level: Final Presentation Ready
+"""
 import os
 import time
 import json
