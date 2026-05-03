@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="civik.link — Empowering elderly and differently-abled citizens with AI-powered health monitoring, government scheme access, and emergency support.">
+  <meta name="theme-color" content="#D9600A">
+
+  <title>civik.link — Empowering Every Citizen</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:,">
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Design System -->
+  <link rel="stylesheet" href="styles/main.css?v=2.2">
+
+  <!-- Material Symbols Rounded (accessibility-friendly filled icons) -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
+
+</head>
+<body>
+
+  <!-- Skip to Content — keyboard accessibility -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Live Region for screen reader announcements -->
+  <div id="sr-announcer" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+  <!-- TTS Indicator -->
+  <div id="tts-indicator" class="sr-only" aria-live="assertive"></div>
+
+  <div id="app-shell">
+
+    <!-- ── Sidebar ── -->
+    <aside id="sidebar" role="navigation" aria-label="Main navigation">
+
+      <!-- Brand -->
+      <a href="#" class="sidebar-brand" aria-label="civik.link home">
+        <div class="sidebar-brand-icon" aria-hidden="true">
+          <span class="material-symbols-rounded">link</span>
+        </div>
+        <div class="sidebar-brand-text">
+          <h1>civik.link</h1>
+          <p>Empowering Every Citizen</p>
+        </div>
+      </a>
+
+      <!-- Nav — built by JS from CONFIG.PAGES, never hardcoded here -->
+      <nav id="main-nav" aria-label="Page navigation">
+        <ul id="nav-list" role="list">
+          <!-- Populated by app.js -->
+        </ul>
+      </nav>
+
+      <!-- Sidebar Footer — user info -->
+      <div class="sidebar-footer">
+        <div class="user-chip" role="region" aria-label="Logged in user">
+          <div class="user-avatar" id="user-avatar" aria-hidden="true"></div>
+          <div>
+            <p class="user-name" id="sidebar-user-name">Loading…</p>
+            <p class="user-id"   id="sidebar-user-id">UDID: —</p>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- Sidebar overlay for mobile -->
+    <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
+
+    <!-- ── Header ── -->
+    <header id="header" role="banner">
+
+      <!-- Mobile hamburger -->
+      <button class="mobile-nav-toggle" id="mobile-menu-btn"
+              aria-label="Open navigation menu" aria-expanded="false" aria-controls="sidebar">
+        <span class="material-symbols-rounded" aria-hidden="true">menu</span>
+      </button>
+
+      <!-- Greeting — updated by JS -->
+      <div class="header-greeting hide-mobile">
+        <h2 id="header-greeting">Good morning</h2>
+        <p id="header-date" class="text-muted"></p>
+      </div>
+
+      <!-- Header right actions -->
+      <div class="header-actions">
+
+        <!-- Accessibility Controls -->
+        <div class="a11y-bar" role="group" aria-label="Accessibility controls">
+          <button class="a11y-btn" id="btn-font-small"
+                  aria-label="Set small font size" title="Small text">A</button>
+          <button class="a11y-btn active" id="btn-font-medium"
+                  aria-label="Set medium font size" title="Medium text (default)">A</button>
+          <button class="btn-font-large a11y-btn" id="btn-font-large"
+                  aria-label="Set large font size" title="Large text">A</button>
+          <button class="a11y-btn" id="btn-contrast"
+                  aria-label="Toggle high contrast mode" title="High contrast">
+            <span class="material-symbols-rounded" aria-hidden="true" style="font-size:1.125rem">contrast</span>
+          </button>
+          <button class="a11y-btn" id="btn-tts"
+                  aria-label="Toggle text to speech" title="Read aloud">
+            <span class="material-symbols-rounded" aria-hidden="true" style="font-size:1.125rem">volume_up</span>
+          </button>
+        </div>
+
+        <!-- Notifications -->
+        <button class="notif-btn" id="btn-notifications"
+                aria-label="Notifications — 3 unread" aria-haspopup="true">
+          <span class="material-symbols-rounded" aria-hidden="true">notifications</span>
+          <span class="notif-badge" id="notif-badge" aria-hidden="true"></span>
+        </button>
+
+      </div>
+    </header>
+
+    <!-- ── Main Content — all pages render here ── -->
+    <main id="main-content" role="main" aria-label="Page content" tabindex="-1">
+      <div id="page-root">
+        <!-- Rendered by app.js router -->
+      </div>
+    </main>
+
+  </div><!-- #app-shell -->
+
+  <!-- Entry point — type=module so we can use ES imports -->
+  <script type="module" src="scripts/app_v2.js?v=2.2"></script>
+
+</body>
+</html>

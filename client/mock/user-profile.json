@@ -1,0 +1,31 @@
+{
+  "id": "usr_001",
+  "name": "Ramesh Sharma",
+  "profile_completed": true,
+  "age": null,
+  "gender": "",
+  "location": {
+    "city": "",
+    "state": "",
+    "pincode": ""
+  },
+  "profile_photo": null,
+  "disability_type": "",
+  "disability_percentage": 0,
+  "udid": "",
+  "blood_group": "",
+  "medical_conditions": [],
+  "allergies": [],
+  "emergency_contacts": [],
+  "preferences": {
+    "language": "hi",
+    "font_size": "large",
+    "high_contrast": false,
+    "tts_enabled": true,
+    "theme": "light"
+  },
+  "caregiver": null,
+  "registered_on": "2024-01-15",
+  "ayushman_card": "12-3456-7890-1234",
+  "pension_id": "UP-OLDAGE-98765"
+}

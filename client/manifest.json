@@ -1,0 +1,17 @@
+{
+  "name": "civik.link",
+  "short_name": "civik",
+  "description": "Empowering every citizen with accessible AI and health hub.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFCF8",
+  "theme_color": "#D9600A",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063822.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

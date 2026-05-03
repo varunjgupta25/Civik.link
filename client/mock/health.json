@@ -1,0 +1,134 @@
+{
+  "vitals": {
+    "last_updated": "2026-04-15T06:30:00",
+    "blood_pressure": {
+      "systolic": 138,
+      "diastolic": 88,
+      "unit": "mmHg",
+      "status": "slightly_high",
+      "history": [
+        { "date": "2026-04-09", "systolic": 145, "diastolic": 92 },
+        { "date": "2026-04-10", "systolic": 142, "diastolic": 90 },
+        { "date": "2026-04-11", "systolic": 140, "diastolic": 89 },
+        { "date": "2026-04-12", "systolic": 136, "diastolic": 87 },
+        { "date": "2026-04-13", "systolic": 139, "diastolic": 88 },
+        { "date": "2026-04-14", "systolic": 137, "diastolic": 86 },
+        { "date": "2026-04-15", "systolic": 138, "diastolic": 88 }
+      ]
+    },
+    "blood_sugar": {
+      "fasting": 118,
+      "post_meal": 162,
+      "unit": "mg/dL",
+      "status": "borderline",
+      "history": [
+        { "date": "2026-04-09", "fasting": 125, "post_meal": 175 },
+        { "date": "2026-04-10", "fasting": 122, "post_meal": 168 },
+        { "date": "2026-04-11", "fasting": 119, "post_meal": 165 },
+        { "date": "2026-04-12", "fasting": 116, "post_meal": 160 },
+        { "date": "2026-04-13", "fasting": 120, "post_meal": 163 },
+        { "date": "2026-04-14", "fasting": 117, "post_meal": 158 },
+        { "date": "2026-04-15", "fasting": 118, "post_meal": 162 }
+      ]
+    },
+    "heart_rate": {
+      "value": 76,
+      "unit": "bpm",
+      "status": "normal",
+      "history": [72, 74, 75, 77, 76, 78, 76]
+    },
+    "oxygen_saturation": {
+      "value": 97,
+      "unit": "%",
+      "status": "normal",
+      "history": [96, 97, 98, 97, 97, 96, 97]
+    },
+    "weight": {
+      "value": 74.5,
+      "unit": "kg",
+      "target": 70,
+      "history": [76, 75.8, 75.5, 75.2, 74.8, 74.6, 74.5]
+    }
+  },
+  "medications": [
+    {
+      "id": "med_001",
+      "name": "Metformin",
+      "dosage": "500mg",
+      "frequency": "Twice daily",
+      "times": ["08:00", "20:00"],
+      "purpose": "Blood sugar control",
+      "doctor": "Dr. Anil Mehta",
+      "refill_date": "2026-05-01",
+      "today_status": {
+        "08:00": "taken",
+        "20:00": "pending"
+      },
+      "instructions": "Take with meals",
+      "colour": "orange"
+    },
+    {
+      "id": "med_002",
+      "name": "Amlodipine",
+      "dosage": "5mg",
+      "frequency": "Once daily",
+      "times": ["09:00"],
+      "purpose": "Blood pressure",
+      "doctor": "Dr. Anil Mehta",
+      "refill_date": "2026-04-28",
+      "today_status": {
+        "09:00": "taken"
+      },
+      "instructions": "Take in the morning",
+      "colour": "blue"
+    },
+    {
+      "id": "med_003",
+      "name": "Vitamin D3",
+      "dosage": "60000 IU",
+      "frequency": "Weekly",
+      "times": ["Sunday 10:00"],
+      "purpose": "Bone health",
+      "doctor": "Dr. Anil Mehta",
+      "refill_date": "2026-06-01",
+      "today_status": {},
+      "instructions": "Take after breakfast",
+      "colour": "yellow"
+    }
+  ],
+  "appointments": [
+    {
+      "id": "apt_001",
+      "doctor": "Dr. Anil Mehta",
+      "speciality": "General Physician",
+      "hospital": "Civil Hospital, Lucknow",
+      "date": "2026-04-20",
+      "time": "11:00",
+      "type": "in_person",
+      "status": "confirmed",
+      "notes": "Routine check-up, bring reports"
+    },
+    {
+      "id": "apt_002",
+      "doctor": "Dr. Sunita Rao",
+      "speciality": "Diabetologist",
+      "hospital": "Telemedicine",
+      "date": "2026-04-25",
+      "time": "15:00",
+      "type": "video",
+      "status": "confirmed",
+      "notes": "Bring last 7 days blood sugar log"
+    }
+  ],
+  "health_score": {
+    "value": 72,
+    "label": "Fair",
+    "breakdown": {
+      "vitals": 68,
+      "medication_adherence": 85,
+      "activity": 60,
+      "sleep": 75
+    },
+    "tip": "Your blood pressure is slightly elevated. Try to reduce salt intake and take a 15-minute walk daily."
+  }
+}
