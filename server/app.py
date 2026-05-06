@@ -377,7 +377,6 @@ async def verify_otp(req: OtpVerifyRequest, response: Response):
         httponly=True,
         secure=COOKIE_SECURE,
         samesite="lax",
-        max_age=COOKIE_MAX_AGE,
         path="/",
     )
     return {"success": True, "token_type": "cookie", "udid": udid}
