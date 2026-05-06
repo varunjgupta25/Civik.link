@@ -2271,6 +2271,10 @@ function renderOnboarding() {
   document.getElementById('btn-ob-help').onclick = renderPairingGuide;
 
   function renderPairingGuide() {
+    // Prevent duplicates
+    const existing = document.querySelector('.modal-overlay');
+    if (existing) existing.remove();
+
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.style.display = 'flex';
