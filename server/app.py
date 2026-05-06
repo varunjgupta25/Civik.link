@@ -295,7 +295,7 @@ def send_otp(email: str, otp: str) -> str:
     if smtp_host and smtp_user and smtp_pass:
         try:
             msg = MIMEMultipart()
-            msg['From'] = smtp_user
+            msg['From'] = os.getenv("SMTP_FROM", smtp_user)
             msg['To'] = email
             msg['Subject'] = f"{otp} is your civik.link verification code"
             
