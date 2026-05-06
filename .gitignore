@@ -25,3 +25,6 @@ civik.db
 
 # ── Private Docs ──────────────────────────────────────────────
 CIVIK_LINK_BLUEPRINT.md
+
+# ── Load Test Results ─────────────────────────────────────────
+*.csv

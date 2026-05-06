@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   <!-- Design System -->
-  <link rel="stylesheet" href="styles/main.css?v=2.2">
+  <link rel="stylesheet" href="styles/main.css?v=3.0">
 
   <!-- Material Symbols Rounded (accessibility-friendly filled icons) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet">
@@ -74,9 +74,9 @@
           </div>
         </div>
         <div style="display:flex;gap:0.75rem;justify-content:center;margin-top:0.75rem;flex-wrap:wrap;">
-          <a href="/about.html" style="font-size:0.75rem;color:rgba(255,255,255,0.6);text-decoration:none;" aria-label="About Us and Support">About & Support</a>
+          <a href="/about.html" style="font-size:0.75rem;color:rgba(255,255,255,0.6);text-decoration:none;" aria-label="About Us and Support">Support</a>
           <span style="color:rgba(255,255,255,0.3);font-size:0.75rem;">·</span>
-          <a href="/privacy.html" style="font-size:0.75rem;color:rgba(255,255,255,0.6);text-decoration:none;" aria-label="Privacy Policy">Privacy</a>
+          <a href="/privacy.html" style="font-size:0.75rem;color:rgba(255,255,255,0.6);text-decoration:none;" aria-label="Privacy Policy">Privacy Policy</a>
           <span style="color:rgba(255,255,255,0.3);font-size:0.75rem;">·</span>
           <a href="/terms.html" style="font-size:0.75rem;color:rgba(255,255,255,0.6);text-decoration:none;" aria-label="Terms of Service">Terms</a>
         </div>
@@ -123,6 +123,14 @@
           </button>
         </div>
 
+        <!-- Language Toggle -->
+        <div class="lang-selector-container" style="display:flex; align-items:center; gap:0.5rem; background:var(--clr-surface); border:1px solid var(--clr-border-light); padding:0.25rem 0.75rem; border-radius:99px; height:38px;">
+          <span class="material-symbols-rounded" style="font-size:1.125rem; opacity:0.6;">language</span>
+          <select id="lang-selector" style="border:none; background:transparent; font-family:inherit; font-size:0.85rem; font-weight:600; color:var(--clr-text); cursor:pointer; outline:none; padding-right:0.25rem;">
+            <!-- Populated by JS -->
+          </select>
+        </div>
+
         <!-- Notifications -->
         <button class="notif-btn" id="btn-notifications"
                 aria-label="Notifications — 3 unread" aria-haspopup="true">
@@ -140,10 +148,27 @@
       </div>
     </main>
 
+    <!-- ── Cookie Consent Banner (DPDP/GDPR Compliant) ── -->
+    <div id="cookie-banner" style="position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--clr-border); padding: var(--space-md) var(--space-lg); z-index: 9999; display: none; box-shadow: 0 -4px 12px rgba(0,0,0,0.05);">
+      <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-md);">
+        <div style="flex: 1; min-width: 280px;">
+          <p style="font-size: 0.875rem; color: var(--clr-text); margin: 0;">
+            <b>Privacy & Cookies:</b> We use essential cookies to secure your health data and authenticate your session. 
+            By continuing, you agree to our <a href="/privacy.html" style="color:var(--clr-primary);">Privacy Policy</a>.
+          </p>
+        </div>
+        <div style="display: flex; gap: var(--space-sm);">
+          <button id="btn-cookie-accept" class="btn btn-primary btn-sm">Accept & Continue</button>
+        </div>
+      </div>
+    </div>
+
   </div><!-- #app-shell -->
 
-  <!-- Entry point — type=module so we can use ES imports -->
-  <script type="module" src="scripts/app_v2.js?v=2.2"></script>
+  <!-- Scripts -->
+  <script src="scripts/translations.js"></script>
+  <script src="scripts/bluetoothService.js"></script>
+  <script type="module" src="scripts/app_v2.js?v=3.1"></script>
 
 </body>
 </html>

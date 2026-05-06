@@ -7,7 +7,7 @@ const CONFIG = {
 
   // ── Data Source ────────────────────────────────────────────────────────────
   USE_MOCK_DATA: false,
-  API_BASE_URL: 'https://civik-backend-nydn.onrender.com',  // Production Backend
+  API_BASE_URL: '/api',  // Relative path works for both localhost and IP-based access
   MOCK_BASE_PATH: './mock',
 
   // ── App Identity ───────────────────────────────────────────────────────────
@@ -84,9 +84,36 @@ const CONFIG = {
     { min: 90, max: 100,label: 'Excellent', class: 'score-excellent' },
   ],
 
+  // ── Languages ─────────────────────────────────────────────────────────────
+  LANGUAGES: [
+    { code: 'en', label: 'English',     native: 'English' },
+    { code: 'hi', label: 'Hindi',       native: 'हिन्दी' },
+    { code: 'mr', label: 'Marathi',     native: 'मराठी' },
+    { code: 'gu', label: 'Gujarati',    native: 'ગુજરાતી' },
+    { code: 'ta', label: 'Tamil',       native: 'தமிழ்' },
+    { code: 'bn', label: 'Bengali',     native: 'বাংলা' },
+    { code: 'te', label: 'Telugu',      native: 'తెలుగు' },
+    { code: 'kn', label: 'Kannada',     native: 'ಕನ್ನಡ' },
+    { code: 'ml', label: 'Malayalam',   native: 'മലയാളം' },
+    { code: 'pa', label: 'Punjabi',     native: 'ਪੰਜਾਬੀ' },
+    { code: 'or', label: 'Odia',        native: 'ଓଡ଼ିଆ' },
+    { code: 'as', label: 'Assamese',    native: 'অসমীয়া' },
+    { code: 'ur', label: 'Urdu',        native: 'اردو' },
+    { code: 'sa', label: 'Sanskrit',    native: 'संस्कृतम्' },
+    { code: 'ks', label: 'Kashmiri',    native: 'کٲشُر' },
+    { code: 'kok',label: 'Konkani',     native: 'कोंकणी' },
+    { code: 'mni',label: 'Manipuri',    native: 'মণিপুরী' },
+    { code: 'ne', label: 'Nepali',      native: 'नेपाली' },
+    { code: 'sd', label: 'Sindhi',      native: 'सिंधी' },
+    { code: 'doi',label: 'Dogri',       native: 'डोगरी' },
+    { code: 'brx',label: 'Bodo',        native: 'बड़ो' },
+    { code: 'mai',label: 'Maithili',    native: 'मैथिली' },
+    { code: 'sat',label: 'Santali',     native: 'संताली' },
+  ],
+  DEFAULT_LANG: 'en',
+
   // ── TTS Voice Settings ─────────────────────────────────────────────────────
   TTS: {
-    lang: 'hi-IN',        // Default Hindi, matches user preference
     rate: 0.9,
     pitch: 1.0,
     volume: 1.0,

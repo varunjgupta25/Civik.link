@@ -26,10 +26,10 @@ if (localStorage.getItem('civik_user_profile')?.includes("Ramesh Sharma")) {
 // ── App State ──────────────────────────────────────────────────────────────────
 
 const State = {
-  user:          null,
-  health:        null,
-  schemes:       null,
-  notifications: null,
+  user:          { preferences: {}, language: 'en' },
+  health:        { vitals: {}, medications: [], appointments: [] },
+  schemes:       { schemes: [], categories: [] },
+  notifications: { notifications: [] },
   currentPage:   CONFIG.DEFAULT_PAGE,
   ttsEnabled:    CONFIG.DEFAULT_TTS_ENABLED,
   highContrast:  CONFIG.DEFAULT_HIGH_CONTRAST,
@@ -40,27 +40,73 @@ const State = {
 // ── Boot ───────────────────────────────────────────────────────────────────────
 
 async function boot() {
-  console.log("[App] Booting...");
+  if (window.__civik_booted) {
+    console.warn("[App] Boot already in progress or completed. Skipping...");
+    return;
+  }
+  window.__civik_booted = true;
 
-  // Handle Splash Screen Animation
-  const splashScreen = document.getElementById('splash-screen');
-  const splashBar = document.getElementById('splash-bar');
-  if (splashScreen && splashBar) {
-    // Start progress bar animation
-    setTimeout(() => { splashBar.style.width = '100%'; }, 100);
-    
-    // Wait for animation to finish, then fade out
-    await new Promise(resolve => setTimeout(resolve, 1600));
-    splashScreen.style.opacity = '0';
-    
-    // Wait for fade out to finish, then remove from DOM
-    await new Promise(resolve => setTimeout(resolve, 500));
-    splashScreen.style.display = 'none';
+  console.log("%c[App] Booting Civik.Link...", "color: #0B5394; font-weight: bold; font-size: 1.2em;");
+  console.time("boot");
+
+  // 1. DISMISS SPLASH SCREEN IMMEDIATELY (Safety First)
+  try {
+    const splashScreen = document.getElementById('splash-screen');
+    const splashBar = document.getElementById('splash-bar');
+    if (splashScreen) {
+      console.log("[App] Dismissing splash screen...");
+      if (splashBar) splashBar.style.width = '100%';
+      
+      // Wait for a short animation then hide
+      await new Promise(r => setTimeout(r, 800));
+      splashScreen.style.opacity = '0';
+      await new Promise(r => setTimeout(r, 500));
+      splashScreen.style.display = 'none';
+      console.log("[App] Splash screen dismissed.");
+    }
+  } catch (e) {
+    console.error("[App] Failed to hide splash screen:", e);
+  }
+
+  // 2. Handle Cookie Banner
+  try {
+    const cookieBanner = document.getElementById('cookie-banner');
+    const cookieAccept = document.getElementById('btn-cookie-accept');
+    if (cookieBanner && !localStorage.getItem('civik_cookies_accepted')) {
+      cookieBanner.style.display = 'block';
+    }
+    if (cookieAccept) {
+      cookieAccept.onclick = () => {
+        localStorage.setItem('civik_cookies_accepted', 'true');
+        cookieBanner.style.opacity = '0';
+        setTimeout(() => { cookieBanner.style.display = 'none'; }, 300);
+      };
+    }
+  } catch (e) {
+    console.warn("[App] Cookie banner error:", e);
+  }
+
+  // Check for translations
+  if (typeof window.t === 'undefined') {
+    console.error("[App] t() helper not found. Fallback to dummy.");
+    window.t = (k) => k;
   }
 
 
   // STEP 1: If no valid auth cookie → show login screen immediately, done.
-  if (!(await AuthService.isAuthenticated())) {
+  console.log("[App] Checking authentication...");
+  let authenticated = false;
+  try {
+    // Add a timeout to the auth check so we don't hang forever
+    const authPromise = AuthService.isAuthenticated();
+    const timeoutPromise = new Promise(r => setTimeout(() => r(false), 5000));
+    authenticated = await Promise.race([authPromise, timeoutPromise]);
+  } catch (e) {
+    console.error("[App] Auth check failed:", e);
+  }
+
+  if (!authenticated) {
+    console.log("[App] Not authenticated. Rendering landing page.");
     renderLanding();
     return;
   }
@@ -91,6 +137,16 @@ async function boot() {
         const d = await hRes.json();
         if (d.health) State.health = d.health;
       }
+
+      const nRes = await fetch('/api/notifications', { credentials: 'same-origin' });
+      if (nRes.ok) {
+        const d = await nRes.json();
+        if (d.notifications) {
+          State.notifications = {
+            notifications: d.notifications.notifications || d.notifications || []
+          };
+        }
+      }
     } catch (e) {
       console.warn("[App] Server unreachable, using mock data:", e.message);
     }
@@ -107,7 +163,9 @@ async function boot() {
     }
 
     // STEP 3: Show dashboard after the required profile exists
+    console.log("[App] Boot successful. Initializing UI...");
     initUI();
+    console.timeEnd("boot");
 
   } catch (err) {
     console.error("[App] Boot Error:", err.message);
@@ -124,7 +182,7 @@ async function loadMockFallback() {
     DataService.getSchemes(),
     DataService.getNotifications(),
   ]);
-  State.user          = mockUser          || { name: 'Citizen', preferences: {} };
+  State.user          = mockUser          || { name: 'Citizen', preferences: {}, language: 'en' };
   State.health        = mockHealth        || { vitals: {}, medications: [], appointments: [] };
   State.schemes       = schemes           || { schemes: [], categories: [] };
   State.notifications = notifications     || { notifications: [] };
@@ -133,16 +191,100 @@ async function loadMockFallback() {
   State.ttsEnabled    = false;
 }
 
-
 function initUI() {
-  buildNav();
-  buildSidebarUser();
-  buildHeader();
-  buildNotificationBadge();
-  initAccessibilityControls();
-  initMobileMenu();
+  try {
+    initLanguageSelector();
+    buildNav();
+    buildSidebarUser();
+    buildHeader();
+    buildNotificationBadge();
+    initAccessibilityControls();
+    initMobileMenu();
+    initBluetoothHardware();
+  } catch (e) {
+    console.error("[UI] Error during component initialization:", e);
+  }
 
-  navigateTo(CONFIG.DEFAULT_PAGE);
+  const lastPage = localStorage.getItem('civik_last_page') || CONFIG.DEFAULT_PAGE;
+  navigateTo(lastPage);
+}
+
+function initLanguageSelector() {
+  const selector = document.getElementById('lang-selector');
+  if (!selector) return;
+
+  // Populate
+  selector.innerHTML = CONFIG.LANGUAGES.map(l => `
+    <option value="${l.code}" ${l.code === (State.user?.language || 'en') ? 'selected' : ''}>
+      ${l.native}
+    </option>
+  `).join('');
+
+  // Handle Change
+  selector.onchange = async (e) => {
+    const lang = e.target.value;
+    console.log(`[App] Changing language to: ${lang}`);
+    
+    // Update local state
+    if (!State.user) State.user = {};
+    State.user.language = lang;
+
+    // Update server in background
+    try {
+      await fetch('/api/profile', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile: { language: lang } }),
+      });
+    } catch (err) {
+      console.error("[App] Failed to save language preference to server", err);
+    }
+
+    // Refresh everything
+    initUI();
+  };
+}
+
+// ── Bluetooth Hardware Integration ───────────────────────────────────────────
+
+function initBluetoothHardware() {
+  window.addEventListener('civik:ble-update', async (event) => {
+    const { type, value } = event.detail;
+    if (type === 'heart_rate') {
+      console.log(`[App] Hardware Update: HR = ${value}`);
+      
+      // Update local state
+      if (!State.health) State.health = { vitals: {} };
+      if (!State.health.vitals.heart_rate) State.health.vitals.heart_rate = { history: [] };
+      
+      State.health.vitals.heart_rate.value = value;
+      State.health.vitals.heart_rate.status = statusFromRange(value, 60, 100, 50, 110);
+      State.health.vitals.heart_rate.history.push(value);
+      if (State.health.vitals.heart_rate.history.length > 20) State.health.vitals.heart_rate.history.shift();
+      
+      // Update DB in background
+      try {
+        await fetch('/api/health-data', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ health: State.health }),
+        });
+      } catch (e) {
+        console.error("[App] Failed to sync hardware data to DB", e);
+      }
+
+      // Live-refresh if currently on health or dashboard
+      if (State.currentPage === 'health' || State.currentPage === 'dashboard') {
+        const root = document.querySelector('.page-content');
+        if (root) {
+          if (State.currentPage === 'health') renderHealth(root);
+          else renderDashboard(root);
+        }
+      }
+    }
+  });
 }
 
 // ── Navigation Builder ─────────────────────────────────────────────────────────
@@ -154,13 +296,13 @@ function buildNav() {
       <button
         class="nav-link${page.id === 'sos' ? ' sos-link' : ''}"
         data-page="${page.id}"
-        aria-label="${page.ariaLabel}"
+        aria-label="${t('nav_' + page.id)}"
         aria-current="${page.id === State.currentPage ? 'page' : 'false'}"
         role="menuitem"
         type="button"
       >
         <span class="material-symbols-rounded" aria-hidden="true">${page.icon}</span>
-        <span>${page.label}</span>
+        <span>${t('nav_' + page.id)}</span>
       </button>
     </li>
   `).join('');
@@ -177,10 +319,22 @@ function buildSidebarUser() {
   const avatarEl = document.getElementById('user-avatar');
   
   if (nameEl)   nameEl.textContent = State.user.name;
-  
-  // UDID badge — copyable on click
   if (idEl) {
-    const udid = State.user.udid;
+    let udid = State.user.udid;
+    
+    // Local Fallback if UDID is missing from server
+    if (!udid && State.user.email) {
+      const hashStr = State.user.email.toLowerCase().trim();
+      let hash = 0;
+      for (let i = 0; i < hashStr.length; i++) {
+        hash = ((hash << 5) - hash) + hashStr.charCodeAt(i);
+        hash |= 0; // Convert to 32bit integer
+      }
+      const hex = Math.abs(hash).toString(16).toUpperCase().padStart(8, '0');
+      udid = `CVLK-${hex.slice(0, 4)}-${hex.slice(4, 8)}`;
+      State.user.udid = udid; // Save it locally
+    }
+
     if (udid) {
       idEl.innerHTML = `
         <span id="udid-badge" title="Click to copy UDID"
@@ -195,7 +349,7 @@ function buildSidebarUser() {
         </span>`;
       document.getElementById('udid-badge')?.addEventListener('click', () => window._copyUDID(udid));
     } else {
-      idEl.textContent = 'UDID: Generating…';
+      idEl.textContent = 'UDID: Not Set';
     }
   }
 
@@ -220,18 +374,38 @@ function buildSidebarUser() {
     }
   }
 
-  // ── Logout Button ──
-  const logoutContainer = document.querySelector('.sidebar-footer');
-  if (logoutContainer && !document.getElementById('sidebar-logout-container')) {
-    const logoutBtn = document.createElement('div');
-    logoutBtn.id = 'sidebar-logout-container';
-    logoutBtn.innerHTML = `
-      <button id="btn-logout" class="btn btn-ghost" style="width:100%; justify-content:flex-start; color:var(--clr-danger); margin-top: 1rem; border-top: 1px solid var(--clr-border-light); padding-top: 1rem;">
+  // ── Sidebar Footer (Legal & Logout) ──
+  const sidebarFooter = document.querySelector('.sidebar-footer');
+  if (sidebarFooter && !document.getElementById('sidebar-footer-content')) {
+    const footerContent = document.createElement('div');
+    footerContent.id = 'sidebar-footer-content';
+    footerContent.style.marginTop = 'auto';
+    footerContent.innerHTML = `
+      <div style="border-top: 1px solid var(--clr-border-light); padding: 1rem 0; margin-top: 1rem; display: flex; flex-direction: column; gap: 0.25rem;">
+        <a href="/about.html" class="nav-link" style="font-size: 0.85rem; padding: 0.4rem 1rem; color: var(--clr-muted);">
+          <span class="material-symbols-rounded" style="font-size: 1.1rem;">info</span>
+          <span>About</span>
+        </a>
+        <a href="/privacy.html" class="nav-link" style="font-size: 0.85rem; padding: 0.4rem 1rem; color: var(--clr-muted);">
+          <span class="material-symbols-rounded" style="font-size: 1.1rem;">policy</span>
+          <span>Privacy</span>
+        </a>
+        <a href="/terms.html" class="nav-link" style="font-size: 0.85rem; padding: 0.4rem 1rem; color: var(--clr-muted);">
+          <span class="material-symbols-rounded" style="font-size: 1.1rem;">gavel</span>
+          <span>Terms</span>
+        </a>
+        <a href="mailto:support@civik.link" class="nav-link" style="font-size: 0.85rem; padding: 0.4rem 1rem; color: var(--clr-muted);">
+          <span class="material-symbols-rounded" style="font-size: 1.1rem;">contact_support</span>
+          <span>Contact</span>
+        </a>
+      </div>
+      <button id="btn-logout" class="btn btn-ghost" style="width:100%; justify-content:flex-start; color:var(--clr-danger); margin-top: 0.5rem; padding: 0.75rem 1rem;">
         <span class="material-symbols-rounded">logout</span>
-        <span>Logout &amp; Reset</span>
+        <span>${t('logout')}</span>
       </button>
     `;
-    logoutContainer.appendChild(logoutBtn);
+    sidebarFooter.innerHTML = '';
+    sidebarFooter.appendChild(footerContent);
     
     document.getElementById('btn-logout').onclick = () => {
       if (confirm("Logout and clear all local data?")) {
@@ -246,11 +420,12 @@ function buildSidebarUser() {
 function buildHeader() {
   const now = new Date();
   const hour = now.getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const greetKey = hour < 12 ? 'greet_morning' : hour < 17 ? 'greet_afternoon' : 'greet_evening';
+  const greeting = t(greetKey);
   const greetEl = document.getElementById('header-greeting');
   const dateEl  = document.getElementById('header-date');
   if (greetEl) greetEl.textContent = `${greeting}, ${State.user?.name?.split(' ')[0] || ''}`;
-  if (dateEl)  dateEl.textContent  = now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  if (dateEl)  dateEl.textContent  = now.toLocaleDateString(State.user?.language || 'en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 }
 
 function buildNotificationBadge() {
@@ -333,17 +508,21 @@ function getHealthScoreBand(score) {
 }
 
 function sparklineHTML(history, colorClass = 'primary') {
-  if (!history?.length) return '';
-  const max = Math.max(...history);
+  if (!Array.isArray(history)) return '';
+  const max = Math.max(...history, 1);
+  const min = Math.min(...history, 0);
+  const range = (max - min) || 1;
+  
+  const points = history.map((v, i) => {
+    const x = (i / (history.length - 1)) * 100;
+    const y = 20 - ((v - min) / range) * 15;
+    return `${x},${y}`;
+  }).join(' ');
+
   return `
-    <div class="sparkline" aria-hidden="true">
-      ${history.map((v, i) => {
-        const pct  = Math.round((v / max) * 100);
-        const isLatest = i === history.length - 1;
-        return `<div class="sparkline-bar${isLatest ? ' latest' : ''}"
-                     style="height:${pct}%"></div>`;
-      }).join('')}
-    </div>
+    <svg class="sparkline" viewBox="0 0 100 20" preserveAspectRatio="none">
+      <polyline points="${points}" fill="none" stroke="currentColor" stroke-width="2"/>
+    </svg>
   `;
 }
 
@@ -530,8 +709,8 @@ function renderDashboard(container) {
       <!-- Page Header -->
       <div class="section-header">
         <div>
-          <span class="section-eyebrow">Your Dashboard</span>
-          <h2 class="section-title">Namaste, ${h(user?.name?.split(' ')[0] || 'Friend')} 🙏</h2>
+          <span class="section-eyebrow">${t('header_dashboard')}</span>
+          <h2 class="section-title">${t(new Date().getHours() < 12 ? 'greet_morning' : new Date().getHours() < 17 ? 'greet_afternoon' : 'greet_evening')}, ${h(user?.name?.split(' ')[0] || 'Friend')} 🙏</h2>
         </div>
       </div>
 
@@ -540,7 +719,7 @@ function renderDashboard(container) {
         <!-- Health Score Gauge Card -->
         <div class="card card-padded flex-col flex-center" style="text-align:center; gap: var(--space-md);"
              role="region" aria-label="Health score">
-          <p class="section-eyebrow" style="margin:0">Overall Health Score</p>
+          <p class="section-eyebrow" style="margin:0">${t('health_score_title')}</p>
           <div style="position:relative; width:140px; height:140px;">
             <svg class="gauge-svg" width="140" height="140" viewBox="0 0 120 120"
                  aria-label="Health score gauge showing ${score} out of 100" role="img">
@@ -555,7 +734,7 @@ function renderDashboard(container) {
             <div style="position:absolute; inset:0; display:flex; flex-direction:column;
                         align-items:center; justify-content:center;">
               <span id="gauge-score-text" class="font-heading font-bold ${band.class}"
-                    style="font-size:2.25rem; line-height:1;">0</span>
+                     style="font-size:2.25rem; line-height:1;">0</span>
               <span class="text-muted" style="font-size:0.75rem; font-weight:700; text-transform:uppercase;">/ 100</span>
             </div>
           </div>
@@ -565,29 +744,43 @@ function renderDashboard(container) {
           </div>
         </div>
 
-        <!-- Notification Feed -->
+        <!-- Notification Feed (AI Monitored) -->
         <div class="card" role="region" aria-label="Recent notifications">
           <div class="card-header">
-            <h3>Alerts &amp; Reminders</h3>
-            <span class="status-badge status-danger">${unread.length} unread</span>
+            <h3 style="display:flex; align-items:center; gap:8px;">
+              <span class="material-symbols-rounded" style="color:var(--clr-primary); font-size:1.25rem;">auto_awesome</span>
+              ${t('ai_alerts_title')}
+            </h3>
+            <span class="status-badge ${unread.length > 0 ? 'status-danger' : 'status-success'}">
+              ${unread.length} new
+            </span>
           </div>
-          <div class="card-body flex-col gap-sm" style="max-height:280px; overflow-y:auto;">
-            ${unread.length === 0
-              ? `<p class="text-muted">All caught up! No unread alerts.</p>`
-              : unread.map(n => `
-                <div class="notif-item unread priority-${safeToken(n.priority)}"
+          <div class="card-body flex-col gap-sm" style="max-height:280px; overflow-y:auto; padding: 1rem;">
+            ${notifs.length === 0
+              ? `
+                <div style="text-align:center; padding: 2rem 0; opacity: 0.6;">
+                  <span class="material-symbols-rounded" style="font-size:3rem; margin-bottom:0.5rem;">notifications_off</span>
+                  <p>All healthy! Your AI monitor is checking your vitals every 2 hours.</p>
+                </div>
+                `
+              : (notifs || []).map(n => `
+                <div class="notif-item ${!n.is_read ? 'unread' : ''} type-${safeToken(n.type)}"
+                     style="border-left: 4px solid ${n.type === 'warning' ? 'var(--clr-danger)' : 'var(--clr-primary)'}; 
+                            background: ${n.type === 'warning' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(11, 83, 148, 0.03)'};
+                            padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem;"
                      role="alert" aria-label="${h(n.title)}">
-                  <div class="notif-dot ${safeToken(n.priority)}"></div>
-                  <div>
-                    <p class="font-bold" style="font-size:0.9rem;">${h(n.title)}</p>
-                    <p class="text-muted" style="font-size:0.8125rem; margin:0.2rem 0;">${h(n.message)}</p>
-                    <button class="btn btn-ghost btn-sm mt-sm"
-                            onclick="window.navigateTo('${safeToken(n.action.page)}')"
-                            aria-label="${h(n.action.label)}">
-                      ${h(n.action.label)}
-                      <span class="material-symbols-rounded" aria-hidden="true" style="font-size:1rem;">arrow_forward</span>
-                    </button>
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 4px;">
+                    <p class="font-bold" style="font-size:0.95rem; color: ${n.type === 'warning' ? 'var(--clr-danger)' : 'var(--clr-primary)'};">${h(n.title)}</p>
+                    <span style="font-size:0.7rem; opacity:0.6;">${new Date(n.created_at * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                   </div>
+                  <p class="text-muted" style="font-size:0.85rem; line-height: 1.4;">${h(n.message)}</p>
+                  ${n.type === 'warning' ? `
+                    <button class="btn btn-primary btn-sm mt-sm" style="background:var(--clr-danger); border:none;"
+                            onclick="window.navigateTo('sos')">
+                      Take Action
+                      <span class="material-symbols-rounded" style="font-size:1rem;">emergency</span>
+                    </button>
+                  ` : ''}
                 </div>
               `).join('')
             }
@@ -656,20 +849,26 @@ function renderDashboard(container) {
           </button>
         </div>
         <div class="card-body flex-col gap-sm">
-          ${pendingMeds.map(m => `
-            <div class="flex-between" style="padding: 0.5rem 0; border-bottom: 1px solid var(--clr-border-light);">
-              <div class="flex-center gap-sm">
+          ${(pendingMeds || []).map(m => `
+          <div class="card card-padded flex-col gap-md">
+            <div class="flex-between">
+              <div class="flex-center gap-md">
                 <div class="med-pill ${safeToken(m.colour)}"></div>
                 <div>
-                  <p class="font-bold" style="font-size:0.9375rem;">${h(m.name)} — ${h(m.dosage)}</p>
+                  <h4 class="font-bold">${h(m.name)}</h4>
                   <p class="text-muted" style="font-size:0.8125rem;">${h(m.purpose)}</p>
                 </div>
               </div>
-              <div class="flex-center gap-sm">
-                ${Object.entries(m.today_status || {}).filter(([,s]) => s !== 'taken').map(([t, s]) => {
-                  const cfg = getStatusConfig(s);
-                  return `<span class="med-time-chip ${safeToken(s)}" aria-label="${h(m.name)} at ${h(formatTime(t))} is ${h(cfg.label)}">${h(formatTime(t))} · ${h(cfg.label)}</span>`;
-
+              <div class="text-right">
+                <p class="font-bold">${h(m.dosage)}</p>
+                <p class="text-muted" style="font-size:0.75rem;">${h(m.frequency)}</p>
+              </div>
+            </div>
+            <div class="flex-wrap gap-xs">
+              ${(m.times || []).map(t => {
+                const status = m.today_status?.[t] || 'pending';
+                const cfg = getStatusConfig(status);
+                return `<span class="med-time-chip ${safeToken(status)}">${h(formatTime(t))} · ${h(cfg.label)}</span>`;
               }).join('')}
             </div>
           </div>
@@ -730,6 +929,16 @@ function renderHealth(container) {
         <span class="section-eyebrow">Your Wellness</span>
         <h2 class="section-title">Health Hub</h2>
       </div>
+      <div class="flex-center gap-sm">
+        <button id="btn-ble-connect" class="btn btn-primary" style="gap:0.5rem; background:var(--clr-secondary);">
+          <span class="material-symbols-rounded">watch</span>
+          <span>Sync Watch</span>
+        </button>
+        <button id="btn-ble-simulate" class="btn btn-ghost btn-sm" style="color:var(--clr-secondary); border:1px solid rgba(var(--clr-secondary-rgb), 0.2);">
+          <span class="material-symbols-rounded" style="font-size:1.125rem;">biotech</span>
+          <span>Virtual Lab</span>
+        </button>
+      </div>
     </div>
 
     <!-- Vitals Section -->
@@ -768,7 +977,7 @@ function renderHealth(container) {
     <div class="mb-lg" role="region" aria-labelledby="meds-heading">
       <h3 id="meds-heading" style="font-size:1.0625rem; margin-bottom:var(--space-md);">Today's Medications</h3>
       <div class="flex-col gap-sm">
-        ${meds.map(m => `
+        ${(meds || []).map(m => `
           <div class="card card-padded" aria-label="${h(m.name)} — ${h(m.dosage)}">
             <div class="flex-between">
               <div class="flex-center gap-md">
@@ -785,7 +994,7 @@ function renderHealth(container) {
                 </div>
               </div>
               <div class="flex-col" style="align-items:flex-end; gap:0.25rem;">
-                ${m.times.map(t => {
+                ${(m.times || []).map(t => {
                   const status = m.today_status?.[t] || 'pending';
                   const cfg = getStatusConfig(status);
                    return `<span class="med-time-chip ${safeToken(status)}"
@@ -809,7 +1018,7 @@ function renderHealth(container) {
     <div role="region" aria-labelledby="apts-heading">
       <h3 id="apts-heading" style="font-size:1.0625rem; margin-bottom:var(--space-md);">Upcoming Appointments</h3>
       <div class="flex-col gap-sm">
-        ${apts.map(a => {
+        ${(apts || []).map(a => {
           const cfg = getStatusConfig(a.status);
           return `
           <div class="card card-padded" aria-label="Appointment with ${h(a.doctor)} on ${h(formatDate(a.date))}">
@@ -847,6 +1056,35 @@ function renderHealth(container) {
       </div>
     </div>
   `;
+
+  // BLE Connection Handler
+  const handleHealthSync = async (isSimulation = false) => {
+    const btn = isSimulation ? document.getElementById('btn-ble-simulate') : document.getElementById('btn-ble-connect');
+    const otherBtn = isSimulation ? document.getElementById('btn-ble-connect') : document.getElementById('btn-ble-simulate');
+    
+    try {
+      btn.innerHTML = '<span class="material-symbols-rounded">sync</span><span>Syncing…</span>';
+      btn.disabled = true;
+      if (otherBtn) otherBtn.style.display = 'none';
+
+      const { name } = isSimulation 
+        ? await window.BluetoothService.simulate()
+        : await window.BluetoothService.connectHeartRate();
+
+      btn.innerHTML = `<span class="material-symbols-rounded">check_circle</span><span>${h(name)}</span>`;
+      btn.style.background = 'var(--clr-success)';
+      btn.style.color = 'white';
+      announce(`Connected to ${name}`);
+    } catch (err) {
+      btn.innerHTML = isSimulation ? 'Virtual Lab' : 'Sync Watch';
+      btn.disabled = false;
+      if (otherBtn) otherBtn.style.display = 'flex';
+      if (err.name !== 'NotFoundError' && !isSimulation) alert("Hardware Error: " + err.message);
+    }
+  };
+
+  document.getElementById('btn-ble-connect').onclick = () => handleHealthSync(false);
+  document.getElementById('btn-ble-simulate').onclick = () => handleHealthSync(true);
 }
 
 function renderVitalCard(label, value, unit, status, icon, color, bgColor, history) {
@@ -882,7 +1120,7 @@ function renderSchemes(container) {
 
     <!-- Category Filter -->
     <div class="flex-center gap-sm mb-lg" style="flex-wrap:wrap;" role="group" aria-label="Filter schemes by category">
-      ${categories.map(c => `
+      ${(categories || []).map(c => `
         <button class="filter-chip ${c.id === 'all' ? 'active' : ''}"
                 data-category="${c.id}"
                 aria-label="Filter by ${c.label}"
@@ -895,7 +1133,7 @@ function renderSchemes(container) {
 
     <!-- Schemes Grid -->
     <div class="grid-auto" id="schemes-grid" role="list" aria-label="Government schemes">
-      ${schemes.map(s => renderSchemeCard(s)).join('')}
+      ${(schemes || []).map(s => renderSchemeCard(s)).join('')}
     </div>
   `;
 
@@ -912,7 +1150,7 @@ function renderSchemes(container) {
       const cat = chip.dataset.category;
       const grid = document.getElementById('schemes-grid');
       const filtered = cat === 'all' ? schemes : schemes.filter(s => s.category === cat);
-      grid.innerHTML = filtered.map(s => renderSchemeCard(s)).join('');
+      grid.innerHTML = (filtered || []).map(s => renderSchemeCard(s)).join('');
       announce(`Showing ${filtered.length} schemes for ${chip.textContent.trim()}`);
     });
   });
@@ -941,7 +1179,7 @@ function renderSchemeCard(scheme) {
       <div>
         <p class="text-muted" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:0.375rem;">Eligibility</p>
         <ul style="list-style:none; display:flex; flex-direction:column; gap:0.2rem;">
-          ${scheme.eligibility.map(e => `
+          ${(scheme.eligibility || []).map(e => `
             <li style="font-size:0.8125rem; color:var(--clr-text-secondary); display:flex; gap:0.25rem; align-items:flex-start;">
               <span class="material-symbols-rounded" aria-hidden="true" style="font-size:1rem; color:var(--clr-success); flex-shrink:0;">check_circle</span>
               ${e}
@@ -1090,7 +1328,7 @@ function renderSOS(container) {
       </div>
 
       <div class="flex-col gap-sm">
-        ${contacts.map(ct => `
+        ${(contacts || []).map(ct => `
            <div class="card card-padded flex-between"
                 aria-label="${h(ct.name)}, ${h(ct.relation)}${ct.is_primary ? ', primary SOS contact' : ''}">
              <div class="flex-center gap-md">
@@ -1307,18 +1545,18 @@ function initSOSButton() {
 
 function renderAssistant(container) {
   const suggestedQuestions = [
-    'Am I eligible for Ayushman Bharat?',
-    'What is my health score today?',
-    'How do I get a UDID card?',
-    'When is my next appointment?',
-    'What medicines do I need to take today?',
+    t('suggested_ayushman'),
+    t('suggested_score'),
+    t('suggested_udid'),
+    t('suggested_apt'),
+    t('suggested_meds'),
   ];
 
   container.innerHTML = `
     <div class="section-header">
       <div>
-        <span class="section-eyebrow">AI Powered</span>
-        <h2 class="section-title">AI Assistant</h2>
+        <span class="section-eyebrow">${t('assistant_eyebrow')}</span>
+        <h2 class="section-title">${t('assistant_title')}</h2>
       </div>
     </div>
 
@@ -1332,22 +1570,22 @@ function renderAssistant(container) {
               <span class="material-symbols-rounded" aria-hidden="true">smart_toy</span>
             </div>
             <div>
-              <h3 style="font-size:0.9375rem;">civik Assistant</h3>
-              <p class="text-muted" style="font-size:0.75rem; margin:0;">Ask me anything about health or schemes</p>
+              <h3 style="font-size:0.9375rem;">${t('assistant_name')}</h3>
+              <p class="text-muted" style="font-size:0.75rem; margin:0;">${t('assistant_subtitle')}</p>
             </div>
           </div>
         </div>
         <div id="chat-messages" class="flex-col gap-md" style="flex:1; overflow-y:auto; padding:var(--space-lg);"
              role="log" aria-label="Chat messages" aria-live="polite">
           <div class="chat-bubble assistant">
-            Namaste! 🙏 I'm your civik Assistant. I can help you with your health, government schemes, medications, and more. How can I help you today?
+            ${t('assistant_welcome')}
           </div>
         </div>
         <div style="padding:var(--space-md); border-top:1px solid var(--clr-border-light);">
           <div class="flex-center gap-sm">
             <input type="text" id="chat-input"
-                   placeholder="Type your question…"
-                   aria-label="Type your question for the AI assistant"
+                   placeholder="${t('chat_placeholder')}"
+                   aria-label="${t('chat_placeholder')}"
                    style="flex:1; padding:0.75rem 1rem; border:1.5px solid var(--clr-border);
                           border-radius:var(--radius-full); font-size:0.9375rem; font-family:var(--font-body);
                           background:var(--clr-surface); color:var(--clr-text); outline:none;
@@ -1368,14 +1606,13 @@ function renderAssistant(container) {
       <!-- Suggested Questions Panel -->
       <div class="flex-col gap-md">
         <div class="card card-padded">
-          <h4 style="font-size:0.9375rem; margin-bottom:var(--space-md);">Suggested Questions</h4>
+          <h4 style="font-size:0.9375rem; margin-bottom:var(--space-md);">${t('suggested_questions_title')}</h4>
           <div class="flex-col gap-sm">
-            ${suggestedQuestions.map(q => `
-              <button class="btn btn-ghost" style="text-align:left; justify-content:flex-start;"
-                      onclick="window.askSuggested('${q.replace(/'/g, "\\'")}')"
-                      aria-label="Ask: ${q}">
-                <span class="material-symbols-rounded" aria-hidden="true" style="font-size:1rem; flex-shrink:0;">chat_bubble</span>
-                <span style="font-size:0.875rem;">${q}</span>
+            ${(suggestedQuestions || []).map(q => `
+              <button class="btn btn-ghost btn-sm" onclick="window.askAssistant('${h(q)}')"
+                      style="background:white; border:1px solid var(--clr-border-light); justify-content:flex-start; text-align:left; padding: 0.75rem 1rem;">
+                <span class="material-symbols-rounded" style="font-size:1.1rem; color:var(--clr-primary);">help_outline</span>
+                ${h(q)}
               </button>
             `).join('')}
           </div>
@@ -1429,7 +1666,7 @@ function initAssistant() {
     await fetchAIReply(msg);
   };
 
-  window.askSuggested = async (q) => {
+  window.askAssistant = async (q) => {
     addChatMessage(q, 'user');
     await fetchAIReply(q);
   };
@@ -1492,6 +1729,7 @@ async function fetchAIReply(message) {
       body: JSON.stringify({
         message,
         context: buildUserContext(),
+        language: State.user?.language || 'en'
       }),
     });
 
@@ -1654,9 +1892,7 @@ function initMobileMenu() {
 window.navigateTo = navigateTo;
 
 // ── App Initialization ────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  boot();
-});
+// Removed redundant DOMContentLoaded listener here as it's handled at the bottom of the file
 
 // ── Landing & Authentication UI ─────────────────────────────────────────────────────────
 
@@ -1729,6 +1965,7 @@ window.renderLogin = function renderLogin() {
           Verify &amp; Login
           <span class="material-symbols-rounded">lock_open</span>
         </button>
+        
     </div>
   `;
 
@@ -1774,6 +2011,7 @@ window.renderLogin = function renderLogin() {
     }
   };
 
+
   loginBtn.onclick = async () => {
     const otp = otpInput.value.trim();
     const email = requestedEmail || emailInput.value.trim();
@@ -1801,13 +2039,6 @@ window.renderLogin = function renderLogin() {
       loginBtn.disabled = false;
     }
   };
-
-  document.getElementById('btn-reset-data').onclick = () => {
-    if (confirm("This will delete all saved health data and start fresh. Continue?")) {
-      localStorage.clear();
-      window.location.reload();
-    }
-  };
 }
 
 // ── Onboarding UI ──────────────────────────────────────────────────────────────
@@ -1830,6 +2061,7 @@ function renderOnboarding() {
       </div>
 
       <div class="card card-padded flex-col gap-md">
+        <!-- Personal Info -->
         <div class="grid-2" style="gap:var(--space-md);">
           <div class="flex-col gap-xs">
             <label class="font-bold">Full Name *</label>
@@ -1842,6 +2074,7 @@ function renderOnboarding() {
               style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
           </div>
         </div>
+
         <div class="grid-2" style="gap:var(--space-md);">
           <div class="flex-col gap-xs">
             <label class="font-bold">Blood Group</label>
@@ -1859,102 +2092,73 @@ function renderOnboarding() {
             </select>
           </div>
         </div>
-        <div class="grid-2" style="gap:var(--space-md);">
-          <div class="flex-col gap-xs">
-            <label class="font-bold">Phone Number</label>
-            <input id="ob-phone" type="tel" placeholder="+91 98765 43210"
-              style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
-          </div>
-          <div class="flex-col gap-xs">
-            <label class="font-bold">City</label>
-            <input id="ob-city" type="text" placeholder="e.g. Lucknow"
-              style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
-          </div>
-        </div>
-        <div class="grid-2" style="gap:var(--space-md);">
-          <div class="flex-col gap-xs">
-            <label class="font-bold">State</label>
-            <input id="ob-state" type="text" placeholder="e.g. Uttar Pradesh"
-              style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
-          </div>
-          <div class="flex-col gap-xs">
-            <label class="font-bold">Pincode</label>
-            <input id="ob-pincode" type="text" inputmode="numeric" placeholder="e.g. 226001"
-              style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
-          </div>
-        </div>
+
         <div class="grid-2" style="gap:var(--space-md);">
           <div class="flex-col gap-xs">
             <label class="font-bold">Disability Type</label>
-            <input id="ob-disability-type" type="text" placeholder="Leave blank if not applicable"
+            <input id="ob-disability-type" type="text" placeholder="e.g. Locomotor"
               style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
           </div>
           <div class="flex-col gap-xs">
-            <label class="font-bold">Disability Percentage</label>
+            <label class="font-bold">Disability % (if any)</label>
             <input id="ob-disability-percent" type="number" min="0" max="100" placeholder="0"
               style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
           </div>
         </div>
+
         <div class="flex-col gap-xs">
-          <label class="font-bold">Medical Conditions</label>
-          <p class="text-muted" style="font-size:0.8rem;margin:0;">Separate with commas — e.g. Diabetes, Hypertension</p>
-          <input id="ob-conditions" type="text" placeholder="e.g. Diabetes, Hypertension"
-            style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
-        </div>
-        <div class="flex-col gap-xs">
-          <label class="font-bold">Allergies</label>
-          <input id="ob-allergies" type="text" placeholder="e.g. Penicillin (or leave blank)"
+          <label class="font-bold">Medical Conditions & Allergies</label>
+          <p class="text-muted" style="font-size:0.8rem;margin:0;">Crucial for Emergency SOS — e.g. Penicillin Allergy, Diabetes</p>
+          <input id="ob-conditions" type="text" placeholder="e.g. Diabetes, Penicillin Allergy"
             style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
         </div>
 
         <hr style="border:none;border-top:1px solid var(--clr-border-light);margin:0.25rem 0;">
-        <p class="font-bold" style="margin:0;">Baseline Health Details</p>
+        
+        <!-- NEW: Hardware Sync Section -->
+        <div style="background:var(--clr-secondary-light); padding:var(--space-md); border-radius:var(--radius-md); border:1.5px dashed var(--clr-secondary); text-align:center;">
+          <p class="font-bold" style="color:var(--clr-secondary); margin-bottom:0.25rem;">
+            <span class="material-symbols-rounded" style="vertical-align:middle;font-size:1.25rem;">watch_button</span>
+            Smart Baseline Sync
+          </p>
+          <p style="font-size:0.8125rem; margin-bottom:var(--space-md);">Vitals (HR, SpO₂) will be fetched directly from your device.</p>
+          
+          <div class="flex-col gap-sm">
+            <button id="btn-ob-sync" class="btn btn-secondary" style="width:100%; justify-content:center; gap:0.5rem; background:var(--clr-secondary); color:white;">
+              <span class="material-symbols-rounded">bluetooth_searching</span>
+              Find My Watch / Sensor
+            </button>
+            <div id="ob-device-list" style="display:none; margin-top:var(--space-sm); max-height:150px; overflow-y:auto; border:1px solid var(--clr-border); border-radius:var(--radius-md); background:white; text-align:left;">
+              <!-- Devices populated here -->
+            </div>
+            <p id="ob-sync-status" style="font-size:0.75rem; color:var(--clr-text-light); margin:0; display:none;"></p>
+            <button id="btn-ob-help" class="btn btn-ghost btn-sm" style="display:none; color:var(--clr-primary); font-size:0.75rem;">
+              <span class="material-symbols-rounded" style="font-size:1rem;">help</span>
+              How to put watch in pairing mode?
+            </button>
+          </div>
+        </div>
 
-        <div class="grid-2" style="gap:var(--space-md);">
-          <div class="flex-col gap-xs">
-            <label class="font-bold">Blood Pressure Systolic</label>
-            <input id="ob-bp-sys" type="number" min="60" max="240" placeholder="e.g. 120"
-              style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
+        <!-- LIVE MONITOR (Display Only) -->
+        <div id="ob-live-monitor" style="display:none; background:var(--clr-surface-raised); padding:var(--space-md); border-radius:var(--radius-md); border:1px solid var(--clr-border);">
+          <p class="font-bold" style="font-size:0.875rem; margin-bottom:var(--space-sm); color:var(--clr-success);">
+            <span class="pulse-dot" style="display:inline-block; width:8px; height:8px; background:var(--clr-success); border-radius:50%; margin-right:6px;"></span>
+            Live Sensor Stream
+          </p>
+          <div class="grid-2">
+            <div>
+              <p class="text-muted" style="font-size:0.75rem; font-weight:700;">HEART RATE</p>
+              <p id="ob-val-hr" class="font-heading" style="font-size:1.5rem; margin:0;">-- <small style="font-size:0.8rem; font-weight:400;">bpm</small></p>
+            </div>
+            <div>
+              <p class="text-muted" style="font-size:0.75rem; font-weight:700;">OXYGEN (SpO₂)</p>
+              <p id="ob-val-spo2" class="font-heading" style="font-size:1.5rem; margin:0;">-- <small style="font-size:0.8rem; font-weight:400;">%</small></p>
+            </div>
           </div>
-          <div class="flex-col gap-xs">
-            <label class="font-bold">Blood Pressure Diastolic</label>
-            <input id="ob-bp-dia" type="number" min="40" max="160" placeholder="e.g. 80"
-              style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
-          </div>
-        </div>
-        <div class="grid-2" style="gap:var(--space-md);">
-          <div class="flex-col gap-xs">
-            <label class="font-bold">Fasting Blood Sugar</label>
-            <input id="ob-sugar" type="number" min="40" max="500" placeholder="mg/dL"
-              style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
-          </div>
-          <div class="flex-col gap-xs">
-            <label class="font-bold">Heart Rate</label>
-            <input id="ob-heart-rate" type="number" min="30" max="220" placeholder="bpm"
-              style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
-          </div>
-        </div>
-        <div class="grid-2" style="gap:var(--space-md);">
-          <div class="flex-col gap-xs">
-            <label class="font-bold">Oxygen Saturation</label>
-            <input id="ob-spo2" type="number" min="50" max="100" placeholder="%"
-              style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
-          </div>
-          <div class="flex-col gap-xs">
-            <label class="font-bold">Weight</label>
-            <input id="ob-weight" type="number" min="1" max="300" step="0.1" placeholder="kg"
-              style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
-          </div>
-        </div>
-        <div class="flex-col gap-xs">
-          <label class="font-bold">Height</label>
-          <input id="ob-height" type="number" min="30" max="250" placeholder="cm"
-            style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
         </div>
 
         <hr style="border:none;border-top:1px solid var(--clr-border-light);margin:0.25rem 0;">
         <p class="font-bold" style="margin:0;">Emergency Contact</p>
-
         <div class="grid-2" style="gap:var(--space-md);">
           <div class="flex-col gap-xs">
             <label>Contact Name *</label>
@@ -1962,27 +2166,157 @@ function renderOnboarding() {
               style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
           </div>
           <div class="flex-col gap-xs">
-            <label>Relationship</label>
-            <input id="ob-ec-relation" type="text" placeholder="e.g. Son, Daughter"
+            <label>Contact Phone *</label>
+            <input id="ob-ec-phone" type="tel" placeholder="+91 98765 43210"
               style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
           </div>
-        </div>
-        <div class="flex-col gap-xs">
-          <label>Contact Phone *</label>
-          <input id="ob-ec-phone" type="tel" placeholder="+91 98765 43210"
-            style="padding:0.875rem;border-radius:var(--radius-md);border:2px solid var(--clr-border);font-size:1rem;width:100%;box-sizing:border-box;">
         </div>
 
         <div id="ob-error" style="color:var(--clr-danger);font-size:0.875rem;display:none;padding:0.5rem;background:var(--clr-danger-light);border-radius:var(--radius-sm);"></div>
 
         <button id="btn-save-profile" class="btn btn-primary btn-lg" style="width:100%;margin-top:0.5rem;">
-          Save &amp; Go to Dashboard
+          Complete Setup &amp; Enter Dashboard
           <span class="material-symbols-rounded">arrow_forward</span>
         </button>
       </div>
     </div>
   `;
 
+  // --- Logic ---
+
+  // Current hardware state
+  let syncedHR = null;
+  let syncedSpO2 = 98; // Default to normal if not provided by watch
+
+  // 1. Hardware Sync Handler (Python Engine)
+  const handleDiscovery = async () => {
+    const btn = document.getElementById('btn-ob-sync');
+    const deviceList = document.getElementById('ob-device-list');
+    const status = document.getElementById('ob-sync-status');
+    const helpBtn = document.getElementById('btn-ob-help');
+    
+    try {
+      btn.innerHTML = '<span class="material-symbols-rounded">sync</span><span>Searching for devices…</span>';
+      btn.disabled = true;
+      status.style.display = 'block';
+      status.textContent = '🔍 Python Engine scanning for Bluetooth signals...';
+      deviceList.innerHTML = '';
+      deviceList.style.display = 'none';
+      helpBtn.style.display = 'none';
+
+      const response = await fetch('/api/hardware/discover', { method: 'POST' });
+      const { devices } = await response.json();
+
+      if (!devices || devices.length === 0) {
+        status.textContent = '❌ No devices found nearby.';
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-rounded">bluetooth_searching</span><span>Try Again</span>';
+        helpBtn.style.display = 'flex';
+        renderPairingGuide(); // Show guide automatically on failure
+        return;
+      }
+
+      status.textContent = `✅ Found ${devices.length} device(s). Select yours below:`;
+      deviceList.style.display = 'block';
+      
+      devices.forEach(d => {
+        const item = document.createElement('button');
+        item.className = 'btn btn-ghost';
+        item.style.width = '100%';
+        item.style.justifyContent = 'space-between';
+        item.style.padding = '0.75rem';
+        item.style.fontSize = '0.875rem';
+        item.innerHTML = `<span>${h(d.name)}</span> <small class="text-muted">${d.address}</small>`;
+        
+        item.onclick = async () => {
+          status.textContent = `⚡ Connecting to ${h(d.name)}...`;
+          deviceList.style.display = 'none';
+          
+          try {
+            const syncRes = await fetch('/api/hardware/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ address: d.address })
+            });
+            const syncData = await syncRes.json();
+            
+            if (syncData.status === 'success') {
+              syncedHR = syncData.heart_rate;
+              status.textContent = `✨ Connected! Health baseline established.`;
+              btn.innerHTML = `<span class="material-symbols-rounded">check_circle</span><span>Synced with ${h(d.name)}</span>`;
+              btn.style.background = 'var(--clr-success)';
+              btn.style.color = 'white';
+              
+              document.getElementById('ob-live-monitor').style.display = 'block';
+              document.getElementById('ob-val-hr').innerHTML = `${syncedHR} <small style="font-size:0.8rem; font-weight:400;">bpm</small>`;
+              document.getElementById('ob-val-spo2').innerHTML = `98 <small style="font-size:0.8rem; font-weight:400;">%</small>`;
+            } else {
+              throw new Error(syncData.detail || 'Sync failed');
+            }
+          } catch (e) {
+            status.textContent = `❌ Error: ${e.message}`;
+            deviceList.style.display = 'block';
+          }
+        };
+        deviceList.appendChild(item);
+      });
+    } catch (err) {
+      console.error(err);
+      status.textContent = '❌ Could not connect to Python Bluetooth Engine.';
+      btn.disabled = false;
+    }
+  };
+
+  document.getElementById('btn-ob-sync').onclick = handleDiscovery;
+  document.getElementById('btn-ob-help').onclick = renderPairingGuide;
+
+  function renderPairingGuide() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.display = 'flex';
+    modal.style.zIndex = '10000';
+    modal.innerHTML = `
+      <div class="card card-padded" style="max-width:400px; width:90%; position:relative; animation: slideUp 0.3s ease-out;">
+        <button class="btn-ghost" style="position:absolute; top:1rem; right:1rem;" onclick="this.closest('.modal-overlay').remove()">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+        <h3 class="font-heading" style="margin-bottom:var(--space-md); color:var(--clr-primary);">Pairing Guide</h3>
+        
+        <div class="flex-col gap-md" style="font-size:0.9375rem;">
+          <div class="flex-row gap-md">
+            <span class="material-symbols-rounded" style="color:var(--clr-secondary); background:var(--clr-secondary-light); padding:0.5rem; border-radius:50%;">watch_vibration</span>
+            <div>
+              <p class="font-bold" style="margin:0;">1. Enable Pairing Mode</p>
+              <p class="text-muted" style="margin:0; font-size:0.8125rem;">On your watch, go to <b>Settings > Bluetooth</b> and tap "Pair New Device" or "Make Discoverable".</p>
+            </div>
+          </div>
+          
+          <div class="flex-row gap-md">
+            <span class="material-symbols-rounded" style="color:var(--clr-success); background:var(--clr-success-light); padding:0.5rem; border-radius:50%;">distance</span>
+            <div>
+              <p class="font-bold" style="margin:0;">2. Proximity check</p>
+              <p class="text-muted" style="margin:0; font-size:0.8125rem;">Place your watch directly next to your <b>Laptop</b>. The laptop is the one doing the scanning!</p>
+            </div>
+          </div>
+
+          <div class="flex-row gap-md">
+            <span class="material-symbols-rounded" style="color:var(--clr-warning); background:var(--clr-warning-light); padding:0.5rem; border-radius:50%;">laptop_windows</span>
+            <div>
+              <p class="font-bold" style="margin:0;">3. Laptop Bluetooth</p>
+              <p class="text-muted" style="margin:0; font-size:0.8125rem;">Ensure your laptop's Bluetooth is turned ON in Windows Settings.</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%; margin-top:var(--space-lg);" onclick="this.closest('.modal-overlay').remove()">
+          Got it, let's try again
+        </button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  // 2. Save Profile Handler
   document.getElementById('btn-save-profile').onclick = async () => {
     const name    = document.getElementById('ob-name').value.trim();
     const age     = document.getElementById('ob-age').value.trim();
@@ -1991,82 +2325,90 @@ function renderOnboarding() {
     const errEl   = document.getElementById('ob-error');
 
     if (!name || !age || !ecName || !ecPhone) {
-      errEl.textContent = 'Please fill in: Full Name, Age, Emergency Contact Name and Phone.';
+      errEl.textContent = 'Please provide: Name, Age, and Emergency Contact details.';
       errEl.style.display = 'block';
       return;
     }
     errEl.style.display = 'none';
 
     const btn = document.getElementById('btn-save-profile');
-    btn.textContent = 'Saving...';
+    const originalText = btn.innerHTML;
+    btn.textContent = 'Creating Profile...';
     btn.disabled = true;
 
     const profile = {
       name,
       age:                parseInt(age),
-      phone:              document.getElementById('ob-phone').value.trim(),
       blood_group:        document.getElementById('ob-blood').value,
       gender:             document.getElementById('ob-gender').value,
-      location: {
-        city:    document.getElementById('ob-city').value.trim(),
-        state:   document.getElementById('ob-state').value.trim(),
-        pincode: document.getElementById('ob-pincode').value.trim(),
-      },
-      disability_type:       document.getElementById('ob-disability-type').value.trim(),
-      disability_percentage: numberFromInput('ob-disability-percent') || 0,
+      disability_type:    document.getElementById('ob-disability-type').value.trim(),
+      disability_percentage: parseInt(document.getElementById('ob-disability-percent').value) || 0,
       medical_conditions: document.getElementById('ob-conditions').value.split(',').map(s => s.trim()).filter(Boolean),
-      allergies:          document.getElementById('ob-allergies').value.split(',').map(s => s.trim()).filter(Boolean),
       emergency_contacts: [{
         name:       ecName,
-        relation:   document.getElementById('ob-ec-relation').value.trim() || 'Family',
-        phone:      safePhone(ecPhone),
+        phone:      ecPhone,
         is_primary: true,
       }],
       profile_completed: true,
       preferences:       {},
     };
+    
     const health = buildInitialHealthData();
+    // Use hardware values directly from live stream
+    health.vitals.heart_rate.value = syncedHR || 72;
+    health.vitals.oxygen_saturation.value = syncedSpO2 || 98;
 
     try {
-      const res = await fetch('/api/profile', {
-        method:  'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ profile }),
-      });
-      if (!res.ok) throw new Error('Server returned ' + res.status);
-      const data = await res.json();
+      await Promise.all([
+        fetch('/api/profile', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile }),
+        }),
+        fetch('/api/health-data', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ health }),
+        })
+      ]);
 
-      const hRes = await fetch('/api/health-data', {
-        method:  'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ health }),
-      });
-      if (!hRes.ok) throw new Error('Health save returned ' + hRes.status);
-
-      State.user = { ...State.user, ...data.profile };
+      State.user = { ...State.user, ...profile };
       State.health = health;
-      localStorage.setItem('civik_user_profile', JSON.stringify(State.user));
-
-      document.getElementById('sidebar').style.display    = 'flex';
-      document.getElementById('header').style.display     = 'flex';
+      
+      // UI Reset and Enter
+      document.getElementById('sidebar').style.display = 'flex';
+      document.getElementById('header').style.display  = 'flex';
       document.getElementById('main-content').style.marginLeft = '';
       document.getElementById('main-content').style.padding    = '';
-
       initUI();
     } catch (e) {
-      console.error('[Onboarding]', e);
-      if (e.message.includes('401')) {
-        // Token is no longer valid — force re-login
-        console.warn('[Onboarding] Token rejected — clearing session');
-        AuthService.logout();
-        return;
-      }
-      errEl.textContent = 'Could not save profile. Please check your internet connection.';
+      errEl.textContent = 'Save failed. Please try again.';
       errEl.style.display = 'block';
-      btn.textContent = 'Save & Go to Dashboard';
+      btn.innerHTML = originalText;
       btn.disabled = false;
     }
-  };
+    };
 }
+
+// ── Export Boot ──────────────────────────────────────────────────────────────
+window.State = State; // Export for translations.js
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', boot);
+} else {
+  console.log("[App] document already loaded. Booting immediately.");
+  boot();
+}
+
+window.navigateTo = navigateTo;
+window.sendChatMessage = () => {}; // Placeholder until AI module loads
+window.startVoiceInput = () => {}; // Placeholder
+window.askSuggested = (q) => {
+  const input = document.getElementById('chat-input');
+  if (input) {
+    input.value = q;
+    window.sendChatMessage();
+  }
+};
