@@ -107,7 +107,7 @@ async function boot() {
 
   if (!authenticated) {
     console.log("[App] Not authenticated. Rendering landing page.");
-    renderLanding();
+    renderLanding(); // ALWAYS show landing page first
     return;
   }
 
