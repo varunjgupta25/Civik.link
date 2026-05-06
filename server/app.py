@@ -279,6 +279,7 @@ def consume_otp(identifier: str, otp: str):
 
 def send_otp(email: str, otp: str) -> str:
     """Send OTP via SMTP (Gmail) — Works on local laptop."""
+    logger.info(f"==== OTP FOR {email}: {otp} ====")
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
