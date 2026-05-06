@@ -2270,6 +2270,24 @@ function renderOnboarding() {
   document.getElementById('btn-ob-sync').onclick = handleDiscovery;
   document.getElementById('btn-ob-help').onclick = renderPairingGuide;
 
+  // Simulation Handler
+  document.body.addEventListener('click', async (e) => {
+    if (e.target.id === 'btn-ob-simulate' || e.target.closest('#btn-ob-simulate')) {
+      const modal = e.target.closest('.modal-overlay');
+      if (modal) modal.remove();
+      
+      const res = await window.BluetoothService.simulate();
+      if (res.success) {
+        document.getElementById('ob-sync-status').innerHTML = `
+          <div class="status-badge status-success" style="padding:0.5rem 1rem;">
+            <span class="material-symbols-rounded">check_circle</span>
+            Connected: ${res.name}
+          </div>
+        `;
+      }
+    }
+  });
+
   function renderPairingGuide() {
     // Prevent duplicates
     const existing = document.querySelector('.modal-overlay');
@@ -2314,6 +2332,13 @@ function renderOnboarding() {
 
         <button class="btn btn-primary" style="width:100%; margin-top:var(--space-lg);" onclick="this.closest('.modal-overlay').remove()">
           Got it, let's try again
+        </button>
+
+        <div class="divider" style="margin:var(--space-md) 0;"></div>
+        <p class="text-muted" style="font-size:0.75rem; text-align:center; margin-bottom:var(--space-sm);">No hardware handy? Try our simulator:</p>
+        <button id="btn-ob-simulate" class="btn btn-secondary" style="width:100%;">
+          <span class="material-symbols-rounded">science</span>
+          Launch Virtual Hardware Lab
         </button>
       </div>
     `;
