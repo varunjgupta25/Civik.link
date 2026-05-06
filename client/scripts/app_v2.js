@@ -36,7 +36,7 @@ const State = {
   fontSize:      CONFIG.DEFAULT_FONT_SIZE,
   chatHistory:   [],
 };
-
+window.State = State; // Ensure global visibility for translations.js early
 // ── Boot ───────────────────────────────────────────────────────────────────────
 
 async function boot() {
@@ -243,6 +243,11 @@ function initLanguageSelector() {
 
     // Refresh everything
     initUI();
+    
+    // Explicitly re-render the current page to apply new translations
+    if (State.currentPage) {
+      navigateTo(State.currentPage);
+    }
   };
 }
 
@@ -1909,16 +1914,16 @@ window.renderLanding = function() {
           <img src="/assets/logo.png" alt="civik.link logo" style="height: 40px; border-radius: 8px;" onerror="this.style.display='none'">
           <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--clr-primary); margin: 0;">civik.link</h1>
         </div>
-        <button onclick="renderLogin()" style="background: var(--clr-primary); color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 20px; font-weight: 600; cursor: pointer;">Log In</button>
+        <button onclick="renderLogin()" style="background: var(--clr-primary); color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 20px; font-weight: 600; cursor: pointer;">${t('logout').includes('Logout') ? 'Log In' : t('nav_dashboard')}</button>
       </header>
 
       <main style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 3rem 1.5rem;">
-        <h2 style="font-size: 2.5rem; color: var(--clr-text); margin-bottom: 1rem; max-width: 600px;">Connecting Citizens to Health & Government Services</h2>
+        <h2 style="font-size: 2.5rem; color: var(--clr-text); margin-bottom: 1rem; max-width: 600px;">${t('header_dashboard').includes('Dashboard') ? 'Connecting Citizens to Health & Government Services' : t('header_dashboard')}</h2>
         <p style="font-size: 1.125rem; color: var(--clr-text-light); max-width: 500px; margin-bottom: 2.5rem; line-height: 1.6;">
-          A simple, unified platform designed to help you discover government schemes, track your health vitals, and connect with emergency services effortlessly.
+          ${t('nav_schemes').includes('Schemes') ? 'A simple, unified platform designed to help you discover government schemes, track your health vitals, and connect with emergency services effortlessly.' : t('nav_schemes')}
         </p>
         <button onclick="renderLogin()" style="background: var(--clr-primary); color: white; border: none; padding: 1rem 2rem; border-radius: 30px; font-size: 1.125rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(11, 83, 148, 0.2); transition: transform 0.2s ease;">
-          Get Started Now <span class="material-symbols-rounded">arrow_forward</span>
+          ${t('take_action')} <span class="material-symbols-rounded">arrow_forward</span>
         </button>
       </main>
 
