@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: civik-link
+    env: python
+    buildCommand: pip install -r server/requirements.txt
+    startCommand: gunicorn -w 4 -k uvicorn.workers.UvicornWorker server.app:app
+    plan: free
+    region: singapore # Choose closest to user
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        value: /data/civik.db
+    disk:
+      name: civik-data
+      mountPath: /data
+      sizeGB: 1

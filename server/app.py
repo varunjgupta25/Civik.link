@@ -19,7 +19,15 @@ from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import asyncio
-from bleak import BleakScanner, BleakClient
+try:
+    from bleak import BleakScanner, BleakClient
+    HAS_BLUETOOTH = True
+except ImportError:
+    HAS_BLUETOOTH = False
+    logger.warning("Bleak not installed. Bluetooth features will be disabled.")
+except Exception as e:
+    HAS_BLUETOOTH = False
+    logger.warning(f"Bluetooth initialization failed: {e}")
 
 # Load environment variables
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -91,8 +99,10 @@ async def log_requests(request, call_next):
     return response
 
 # ── Database Setup ──────────────────────────────────────────────────────────
-
-DB_PATH  = os.path.join(BASE_DIR, "civik.db")
+# On Render, we use /data/civik.db for persistence
+DB_PATH = os.getenv("DATABASE_URL", os.path.join(BASE_DIR, "civik.db"))
+# Ensure directory exists if path is modified
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 def get_db():
     # check_same_thread=False is needed for multi-worker uvicorn
@@ -513,6 +523,8 @@ async def startup_event():
 @app.post("/api/hardware/discover")
 async def discover_hardware(user=Depends(verify_token)):
     """Scan for nearby health sensors."""
+    if not HAS_BLUETOOTH:
+        return {"devices": [], "status": "Bluetooth unavailable on this server"}
     try:
         devices = await BleakScanner.discover(timeout=5.0)
         # Filter for devices that look like health sensors or have names
@@ -522,7 +534,8 @@ async def discover_hardware(user=Depends(verify_token)):
                 found.append({"name": d.name, "address": d.address})
         return {"devices": found}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Hardware discovery error: {e}")
+        return {"devices": [], "error": str(e)}
 
 @app.post("/api/hardware/sync")
 async def manual_hardware_sync(req: dict, user=Depends(verify_token)):
