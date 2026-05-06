@@ -278,14 +278,14 @@ def consume_otp(identifier: str, otp: str):
     OTP_STORE.pop(identifier, None)
 
 def send_otp(email: str, otp: str) -> str:
-    """Send OTP via SMTP (Gmail) — Works on local laptop."""
-    logger.info(f"==== OTP FOR {email}: {otp} ====")
+    """Send OTP via SMTP (Gmail) — Hardened for Cloud Deployment."""
+    logger.info(f"==== ATTEMPTING OTP EMAIL FOR {email} ====")
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
 
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_port = int(os.getenv("SMTP_PORT", 587))
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", 465))
     smtp_user = os.getenv("SMTP_USERNAME")
     smtp_pass = os.getenv("SMTP_PASSWORD")
 
@@ -302,17 +302,22 @@ def send_otp(email: str, otp: str) -> str:
             body = f"Hi,\n\nYour civik.link verification code is: {otp}\n\nThis code expires in 5 minutes.\n\n— The civik.link Team"
             msg.attach(MIMEText(body, 'plain'))
 
-            server = smtplib.SMTP(smtp_host, smtp_port)
-            server.starttls()
+            # Use SSL for port 465, STARTTLS for others
+            if smtp_port == 465:
+                server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10)
+            else:
+                server = smtplib.SMTP(smtp_host, smtp_port, timeout=10)
+                server.starttls()
+            
             server.login(smtp_user, smtp_pass)
             server.send_message(msg)
             server.quit()
+            logger.info(f"==== OTP SUCCESSFULLY SENT TO {email} ====")
             return "email"
         except Exception as e:
-            print(f"[AUTH] SMTP error: {e}")
-            # Fallback to console if SMTP fails
+            logger.error(f"==== SMTP ERROR FOR {email}: {e} ====")
     
-    print(f"[AUTH] LOCAL MODE - OTP for {email}: {otp}")
+    logger.warning(f"==== SMTP FAILED OR UNCONFIGURED - OTP for {email}: {otp} ====")
     return "console"
 
 def get_or_create_user(identifier: str) -> str:
