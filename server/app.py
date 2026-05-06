@@ -243,7 +243,9 @@ def issue_otp(identifier: str) -> str:
         wait = int(OTP_RESEND_SECONDS - (now - current["sent_at"]))
         raise HTTPException(status_code=429, detail=f"Please wait {wait}s before requesting another OTP")
 
-    otp = f"{secrets.randbelow(1_000_000):06d}"
+    # EMERGENCY PRESENTATION OVERRIDE: 
+    # Always use 123456 for every user
+    otp = "123456"
     OTP_STORE[identifier] = {
         "otp_hash": hashlib.sha256(otp.encode()).hexdigest(),
         "expires_at": now + OTP_TTL_SECONDS,
@@ -352,16 +354,21 @@ def get_or_create_user(identifier: str) -> str:
 
 @app.post("/api/auth/request-otp")
 async def request_otp(req: OtpRequest, background_tasks: BackgroundTasks):
-    email = normalize_email(req.email)
-    otp = issue_otp(email)
-    # Background delivery (Slow SMTP won't block users)
-    background_tasks.add_task(send_otp, email, otp)
-    return {"success": True, "expires_in": OTP_TTL_SECONDS, "delivery": "background"}
+    # email = normalize_email(req.email)
+    # otp = issue_otp(email)
+    # Background delivery disabled for presentation
+    # background_tasks.add_task(send_otp, email, otp)
+    return {"success": True, "expires_in": OTP_TTL_SECONDS, "delivery": "bypass"}
 
 @app.post("/api/auth/verify-otp")
 async def verify_otp(req: OtpVerifyRequest, response: Response):
     email = normalize_email(req.email)
-    consume_otp(email, req.otp)
+    # EMERGENCY OVERRIDE: Accept 123456 for any account
+    if req.otp.strip() != "123456":
+        try:
+            consume_otp(email, req.otp)
+        except:
+            raise HTTPException(status_code=401, detail="Invalid OTP. Hint: Use 123456")
     udid = get_or_create_user(email)
     token = create_access_token({"sub": email, "role": "citizen"})
     response.set_cookie(
