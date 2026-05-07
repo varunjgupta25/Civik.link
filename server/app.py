@@ -666,6 +666,20 @@ async def favicon():
         return FileResponse(favicon_path)
     return FastAPIResponse(status_code=204)
 
+@app.get("/robots.txt", include_in_schema=False)
+async def robots():
+    robots_path = os.path.join(CLIENT_DIR, "robots.txt")
+    if os.path.exists(robots_path):
+        return FileResponse(robots_path)
+    return FastAPIResponse(status_code=404)
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap():
+    sitemap_path = os.path.join(CLIENT_DIR, "sitemap.xml")
+    if os.path.exists(sitemap_path):
+        return FileResponse(sitemap_path, media_type="application/xml")
+    return FastAPIResponse(status_code=404)
+
 @app.exception_handler(404)
 async def custom_404_handler(request, exc):
     if request.url.path.startswith("/api/"):
