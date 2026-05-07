@@ -19,22 +19,12 @@ from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import asyncio
-try:
-    from bleak import BleakScanner, BleakClient
-    HAS_BLUETOOTH = True
-except ImportError:
-    HAS_BLUETOOTH = False
-    logger.warning("Bleak not installed. Bluetooth features will be disabled.")
-except Exception as e:
-    HAS_BLUETOOTH = False
-    logger.warning(f"Bluetooth initialization failed: {e}")
-
+import logging
 # Load environment variables
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 load_dotenv(os.path.join(BASE_DIR, "server", ".env"), override=True)
 
-import logging
 # Configure logging
 LOG_FILE = os.path.join(BASE_DIR, "server.log")
 file_handler = logging.FileHandler(LOG_FILE, encoding='utf-8')
@@ -48,6 +38,18 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("civik")
+
+try:
+    from bleak import BleakScanner, BleakClient
+    HAS_BLUETOOTH = True
+except ImportError:
+    HAS_BLUETOOTH = False
+    logger.warning("Bleak not installed. Bluetooth features will be disabled.")
+except Exception as e:
+    HAS_BLUETOOTH = False
+    logger.warning(f"Bluetooth initialization failed: {e}")
+
+
 logger.setLevel(logging.INFO)
 
 CLIENT_DIR = os.path.join(BASE_DIR, "client")

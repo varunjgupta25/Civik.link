@@ -36,7 +36,7 @@ const State = {
   fontSize:      CONFIG.DEFAULT_FONT_SIZE,
   chatHistory:   [],
 };
-window.State = State; // Ensure global visibility for translations.js early
+
 // ── Boot ───────────────────────────────────────────────────────────────────────
 
 async function boot() {
@@ -107,8 +107,7 @@ async function boot() {
 
   if (!authenticated) {
     console.log("[App] Not authenticated. Rendering landing page.");
-    renderLanding(); // ALWAYS show landing page first
-    applyAntigravityEffects();
+    renderLanding();
     return;
   }
 
@@ -244,11 +243,6 @@ function initLanguageSelector() {
 
     // Refresh everything
     initUI();
-    
-    // Explicitly re-render the current page to apply new translations
-    if (State.currentPage) {
-      navigateTo(State.currentPage);
-    }
   };
 }
 
@@ -465,120 +459,41 @@ function navigateTo(pageId) {
     btn.setAttribute('aria-current', isActive ? 'page' : 'false');
   });
 
+  // Animate out → render → animate in
   const root = document.getElementById('page-root');
-  
-  // Antigravity GSAP transition
-  gsap.to(root, {
-    opacity: 0,
-    y: 10,
-    duration: 0.2,
-    ease: "power2.in",
-    onComplete: () => {
-      root.innerHTML = '';
-      const pageEl = document.createElement('div');
-      pageEl.className = 'page-content';
-      root.appendChild(pageEl);
+  root.style.opacity   = '0';
+  root.style.transform = 'translateY(12px)';
 
-      try {
-        PAGE_RENDERERS[pageId](pageEl);
-      } catch (err) {
-        console.error(`[navigateTo] Renderer "${pageId}" threw:`, err);
-        pageEl.innerHTML = `<div style="padding:2rem;color:red;font-family:monospace;">
-          <b>Page Error (${h(pageId)}):</b><br>${h(err.message)}
-          <br><br><small>Check console for details.</small>
-        </div>`;
-      }
+  setTimeout(() => {
+    root.innerHTML = '';
+    const pageEl = document.createElement('div');
+    pageEl.className = 'page-content';
+    root.appendChild(pageEl);
 
-      const pageConfig = CONFIG.PAGES.find(p => p.id === pageId);
-      document.title = `${pageConfig?.label || pageId} — ${CONFIG.APP_NAME}`;
-      announce(`Navigated to ${pageConfig?.label || pageId}`);
-
-      if (State.ttsEnabled && pageId === 'dashboard') {
-        const score = State.health?.health_score?.value;
-        if (score) speak(`Your health score today is ${score}. ${State.health.health_score.tip}`);
-      }
-
-      // Animate in
-      gsap.to(root, {
-        opacity: 1,
-        y: 0,
-        duration: 0.4,
-        ease: "power2.out"
-      });
-
-      // Apply 3D effects and staggers to new content
-      applyAntigravityEffects();
+    // Always restore opacity — even if renderer throws
+    try {
+      PAGE_RENDERERS[pageId](pageEl);
+    } catch (err) {
+      console.error(`[navigateTo] Renderer "${pageId}" threw:`, err);
+      pageEl.innerHTML = `<div style="padding:2rem;color:red;font-family:monospace;">
+        <b>Page Error (${h(pageId)}):</b><br>${h(err.message)}
+        <br><br><small>Check console for details.</small>
+      </div>`;
     }
-  });
-}
 
-/**
- * applyAntigravityEffects — Refines UI with GSAP
- * 1. Staggers card entrances
- * 2. Adds 3D tilt interaction to glass cards
- */
-function applyAntigravityEffects() {
-  if (typeof gsap === 'undefined') return;
+    root.style.transition = 'all 0.28s ease';
+    root.style.opacity    = '1';
+    root.style.transform  = 'translateY(0)';
 
-  // 1. Staggered card entrance
-  const cards = document.querySelectorAll('.card, .stat-card, .scheme-card, .notif-item');
-  if (cards.length > 0) {
-    gsap.from(cards, {
-      y: 40,
-      opacity: 0,
-      rotateX: -5,
-      duration: 1,
-      stagger: 0.1,
-      ease: "expo.out",
-      clearProps: "transform,opacity"
-    });
-  }
+    const pageConfig = CONFIG.PAGES.find(p => p.id === pageId);
+    document.title = `${pageConfig?.label || pageId} — ${CONFIG.APP_NAME}`;
+    announce(`Navigated to ${pageConfig?.label || pageId}`);
 
-  // 2. 3D Tilt Interaction for Cards
-  cards.forEach(card => {
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      
-      const rotateX = (y - centerY) / 15;
-      const rotateY = (centerX - x) / 15;
-
-      gsap.to(card, {
-        rotateX: rotateX,
-        rotateY: rotateY,
-        scale: 1.02,
-        duration: 0.4,
-        ease: "power2.out",
-        transformPerspective: 1000
-      });
-    });
-
-    card.addEventListener('mouseleave', () => {
-      gsap.to(card, {
-        rotateX: 0,
-        rotateY: 0,
-        scale: 1,
-        duration: 0.8,
-        ease: "elastic.out(1, 0.5)"
-      });
-    });
-  });
-
-  // 3. Floating animation for specific elements
-  const floatingElements = document.querySelectorAll('.sidebar-brand-icon, .user-avatar, .stat-icon');
-  floatingElements.forEach((el, idx) => {
-    gsap.to(el, {
-      y: -5,
-      duration: 2 + (idx * 0.2),
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut"
-    });
-  });
+    if (State.ttsEnabled && pageId === 'dashboard') {
+      const score = State.health?.health_score?.value;
+      if (score) speak(`Your health score today is ${score}. ${State.health.health_score.tip}`);
+    }
+  }, 150);
 }
 
 // ── Utility Helpers ────────────────────────────────────────────────────────────
@@ -805,10 +720,9 @@ function renderDashboard(container) {
         <div class="card card-padded flex-col flex-center" style="text-align:center; gap: var(--space-md);"
              role="region" aria-label="Health score">
           <p class="section-eyebrow" style="margin:0">${t('health_score_title')}</p>
-          <div style="position:relative; width:140px; height:140px; transform-style: preserve-3d; transform: translateZ(30px);">
+          <div style="position:relative; width:140px; height:140px;">
             <svg class="gauge-svg" width="140" height="140" viewBox="0 0 120 120"
-                 aria-label="Health score gauge showing ${score} out of 100" role="img"
-                 style="transform: translateZ(10px);">
+                 aria-label="Health score gauge showing ${score} out of 100" role="img">
               <circle class="gauge-track" cx="60" cy="60" r="54"
                       fill="none" stroke="var(--clr-border-light)" stroke-width="10"/>
               <circle id="gauge-fill" class="gauge-fill" cx="60" cy="60" r="54"
@@ -818,7 +732,7 @@ function renderDashboard(container) {
                       stroke-dashoffset="${circumference}"/>
             </svg>
             <div style="position:absolute; inset:0; display:flex; flex-direction:column;
-                        align-items:center; justify-content:center; transform: translateZ(40px);">
+                        align-items:center; justify-content:center;">
               <span id="gauge-score-text" class="font-heading font-bold ${band.class}"
                      style="font-size:2.25rem; line-height:1;">0</span>
               <span class="text-muted" style="font-size:0.75rem; font-weight:700; text-transform:uppercase;">/ 100</span>
@@ -991,21 +905,14 @@ function animateGauge(score, circumference) {
   if (!gaugeFill || !scoreText) return;
 
   const offset = circumference - (score / 100) * circumference;
-  
-  // Use GSAP for smooth gauge path animation
-  gsap.to(gaugeFill, {
-    strokeDashoffset: offset,
-    duration: 2,
-    ease: "expo.out"
-  });
+  gaugeFill.style.strokeDashoffset = offset;
 
-  // Count up the text score
   let current = 0;
   const interval = setInterval(() => {
     current++;
     scoreText.textContent = current;
     if (current >= score) clearInterval(interval);
-  }, 20);
+  }, 12);
 }
 
 // ── Health Hub ─────────────────────────────────────────────────────────────────
@@ -1994,158 +1901,73 @@ window.renderLanding = function() {
   document.getElementById('sidebar').style.display = 'none';
   document.getElementById('header').style.display = 'none';
   document.getElementById('main-content').style.marginLeft = '0';
-  document.getElementById('main-content').style.marginTop = '0';
 
   container.innerHTML = `
-    <div style="min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(circle at top right, var(--clr-primary-light), var(--clr-bg)); font-family: var(--font-body); overflow-x: hidden;">
-      <header style="padding: 1.25rem 2.5rem; display: flex; justify-content: space-between; align-items: center; background: var(--clr-surface); backdrop-filter: blur(var(--glass-blur)); border-bottom: 1px solid var(--clr-glass-border); position: sticky; top: 0; z-index: 100;">
+    <div style="min-height: 100vh; display: flex; flex-direction: column; background-color: var(--bg-body); font-family: var(--font-stack);">
+      <header style="padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <div class="sidebar-brand-icon" style="width:36px; height:36px;">
-            <span class="material-symbols-rounded">link</span>
-          </div>
-          <h1 style="font-size: 1.375rem; font-weight: 800; color: var(--clr-text); margin: 0; letter-spacing: -0.02em;">civik.link</h1>
+          <img src="/assets/logo.png" alt="civik.link logo" style="height: 40px; border-radius: 8px;" onerror="this.style.display='none'">
+          <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--clr-primary); margin: 0;">civik.link</h1>
         </div>
-        <button onclick="renderLogin()" class="btn btn-ghost btn-sm" style="border-radius: 99px; padding: 0.5rem 1.25rem; font-weight: 700;">Log In</button>
+        <button onclick="renderLogin()" style="background: var(--clr-primary); color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 20px; font-weight: 600; cursor: pointer;">Log In</button>
       </header>
 
-      <main style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 6rem 1.5rem; perspective: 1200px;">
-        <div class="hero-content" style="transform-style: preserve-3d; position: relative; z-index: 10;">
-          <span class="section-eyebrow" style="margin-bottom: 1rem; display: inline-block;">Citizen First Platform</span>
-          <h2 style="font-size: clamp(2.5rem, 8vw, 4.5rem); font-weight: 800; color: var(--clr-text); margin-bottom: 1.5rem; max-width: 900px; line-height: 1; letter-spacing: -0.04em;">
-            Connecting Citizens to <span style="color:var(--clr-primary)">Health</span> & Government
-          </h2>
-          <p style="font-size: 1.25rem; color: var(--clr-text-secondary); max-width: 640px; margin: 0 auto 3.5rem; line-height: 1.6;">
-            A unified Antigravity experience designed to help you discover government schemes, track vitals, and connect with emergency services.
-          </p>
-          
-          <div class="flex-center gap-md" style="justify-content: center;">
-            <button onclick="renderLogin()" class="btn btn-primary btn-lg" style="border-radius: 99px; padding: 1rem 2.5rem;">
-              Get Started <span class="material-symbols-rounded">arrow_forward</span>
-            </button>
-            <button class="btn btn-ghost btn-lg" style="border-radius: 99px; padding: 1rem 2rem;">
-              Watch Video
-            </button>
-          </div>
-        </div>
-
-        <!-- Decorative Spatial Elements -->
-        <div class="hero-visuals" style="margin-top: 6rem; display: flex; gap: 3rem; justify-content: center; transform: rotateX(15deg) translateY(0); opacity: 0.9;">
-           <div class="card" style="width: 240px; height: 160px; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1.5rem; box-shadow: var(--shadow-lg); padding: 1.5rem; text-align: left;">
-              <div class="stat-icon" style="background: var(--clr-secondary-light); color: var(--clr-secondary); width: 32px; height: 32px; font-size: 1rem;">
-                <span class="material-symbols-rounded">favorite</span>
-              </div>
-              <div style="height: 8px; width: 60%; background: var(--clr-border-light); border-radius: 4px; margin-top: 1rem;"></div>
-              <div style="height: 8px; width: 80%; background: var(--clr-border-light); border-radius: 4px; margin-top: 0.5rem;"></div>
-           </div>
-           <div class="card" style="width: 260px; height: 180px; background: white; border-radius: 1.5rem; box-shadow: var(--shadow-xl); transform: translateY(-40px) translateZ(50px); padding: 1.5rem; text-align: left; border: 2px solid var(--clr-primary-light);">
-              <div class="stat-icon" style="background: var(--clr-primary-light); color: var(--clr-primary); width: 40px; height: 40px;">
-                <span class="material-symbols-rounded">analytics</span>
-              </div>
-              <h4 style="margin-top: 1rem;">Health Index</h4>
-              <div style="height: 12px; width: 100%; background: var(--clr-primary-surface); border-radius: 6px; margin-top: 1rem; overflow: hidden;">
-                <div style="height: 100%; width: 75%; background: var(--clr-primary);"></div>
-              </div>
-           </div>
-           <div class="card" style="width: 240px; height: 160px; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1.5rem; box-shadow: var(--shadow-lg); padding: 1.5rem; text-align: left;">
-              <div class="stat-icon" style="background: var(--clr-accent-light); color: var(--clr-accent); width: 32px; height: 32px; font-size: 1rem;">
-                <span class="material-symbols-rounded">gavel</span>
-              </div>
-              <div style="height: 8px; width: 70%; background: var(--clr-border-light); border-radius: 4px; margin-top: 1rem;"></div>
-              <div style="height: 8px; width: 50%; background: var(--clr-border-light); border-radius: 4px; margin-top: 0.5rem;"></div>
-           </div>
-        </div>
+      <main style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 3rem 1.5rem;">
+        <h2 style="font-size: 2.5rem; color: var(--clr-text); margin-bottom: 1rem; max-width: 600px;">Connecting Citizens to Health & Government Services</h2>
+        <p style="font-size: 1.125rem; color: var(--clr-text-light); max-width: 500px; margin-bottom: 2.5rem; line-height: 1.6;">
+          A simple, unified platform designed to help you discover government schemes, track your health vitals, and connect with emergency services effortlessly.
+        </p>
+        <button onclick="renderLogin()" style="background: var(--clr-primary); color: white; border: none; padding: 1rem 2rem; border-radius: 30px; font-size: 1.125rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(11, 83, 148, 0.2); transition: transform 0.2s ease;">
+          Get Started Now <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
       </main>
 
-      <footer style="padding: 2.5rem; text-align: center; color: var(--clr-text-muted); font-size: 0.8125rem; border-top: 1px solid var(--clr-border-light);">
-        <p>&copy; 2026 civik.link — Designed for Bharat with Antigravity Motion.</p>
+      <footer style="padding: 1.5rem; text-align: center; color: var(--clr-text-light); font-size: 0.875rem;">
+        &copy; 2026 civik.link. All rights reserved. | <a href="#" style="color: var(--clr-primary); text-decoration: none;">Privacy Policy</a>
       </footer>
     </div>
   `;
-  
-  if (typeof gsap !== 'undefined') {
-    gsap.from(".hero-content > *", {
-      y: 60,
-      opacity: 0,
-      duration: 1.2,
-      stagger: 0.2,
-      ease: "power4.out"
-    });
-    
-    gsap.from(".hero-visuals .card", {
-      z: -100,
-      opacity: 0,
-      duration: 1.5,
-      stagger: 0.2,
-      ease: "expo.out",
-      delay: 0.5
-    });
-
-    gsap.to(".hero-visuals .card", {
-      y: "+=15",
-      duration: 3,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      stagger: 0.5
-    });
-  }
 }
 
 
 window.renderLogin = function renderLogin() {
   const container = document.getElementById('page-root');
+  // Hide UI shell
   document.getElementById('sidebar').style.display = 'none';
   document.getElementById('header').style.display = 'none';
   document.getElementById('main-content').style.marginLeft = '0';
-  document.getElementById('main-content').style.marginTop = '0';
 
   container.innerHTML = `
-    <div style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle at bottom left, var(--clr-secondary-light), var(--clr-bg)); padding: 2rem;">
-      <div class="card card-padded login-card" style="max-width:460px; width: 100%; padding: 3rem; text-align:center; border-radius: 2rem; box-shadow: var(--shadow-xl);">
-        <div class="sidebar-brand-icon" style="width:64px; height:64px; margin: 0 auto var(--space-lg); font-size:2.5rem; border-radius: 1.25rem;">
-          <span class="material-symbols-rounded">lock</span>
-        </div>
-        <h2 style="margin-bottom:var(--space-xs); font-weight: 800; letter-spacing: -0.02em;">Welcome back</h2>
-        <p class="text-muted" style="margin-bottom:var(--space-xl);">Secure citizen access via OTP</p>
-
-        <div class="flex-col gap-md" style="text-align:left;">
-          <div class="flex-col gap-xs">
-            <label class="font-bold" style="font-size: 0.875rem; color: var(--clr-text-secondary);">Email Address</label>
-            <input type="email" id="login-email" placeholder="e.g. citizen@example.in" 
-                   style="padding:1rem 1.25rem; border-radius:1rem; border:2px solid var(--clr-border); font-size:1.125rem; background: var(--clr-bg); outline: none; transition: border-color 0.2s;">
-          </div>
-          <div class="flex-col gap-xs" id="otp-field" style="display:none;">
-            <label class="font-bold" style="font-size: 0.875rem; color: var(--clr-text-secondary);">6-Digit Verification Code</label>
-            <input type="text" id="login-otp" inputmode="numeric" maxlength="6" placeholder="0 0 0 0 0 0"
-                   style="padding:1rem; border-radius:1rem; border:2px solid var(--clr-border); font-size:1.5rem; letter-spacing:0.4em; text-align: center; background: var(--clr-bg);">
-          </div>
-          <p id="login-status" class="text-muted" style="font-size:0.8125rem; text-align:center; margin:0; min-height: 1.25rem;"></p>
-          <button id="btn-request-otp" class="btn btn-primary btn-lg" style="width:100%; border-radius: 1rem; margin-top: 1rem;">
-            Send Code
-            <span class="material-symbols-rounded">send</span>
-          </button>
-          <button id="btn-login" class="btn btn-primary btn-lg" style="width:100%; display:none; border-radius: 1rem; margin-top: 1rem; background: var(--clr-secondary);">
-            Verify & Login
-            <span class="material-symbols-rounded">verified_user</span>
-          </button>
-        </div>
-        
-        <button onclick="renderLanding()" class="btn btn-ghost btn-sm" style="margin-top: 2rem; border: none;">
-          <span class="material-symbols-rounded">arrow_back</span> Back to Home
-        </button>
+    <div style="max-width:440px; margin: 10vh auto; padding: var(--space-2xl); text-align:center;">
+      <div class="sidebar-brand-icon" style="width:64px; height:64px; margin: 0 auto var(--space-lg); font-size:2rem;">
+        <span class="material-symbols-rounded">link</span>
       </div>
+      <h2 style="margin-bottom:var(--space-xs);">Welcome to civik.link</h2>
+      <p class="text-muted" style="margin-bottom:var(--space-xl);">Secure JWT Authentication for Citizens</p>
+
+      <div class="card card-padded flex-col gap-md" style="text-align:left;">
+        <div class="flex-col gap-xs">
+          <label class="font-bold">Email Address</label>
+          <input type="email" id="login-email" placeholder="you@example.com" 
+                 style="padding:1rem; border-radius:var(--radius-md); border:2px solid var(--clr-border); font-size:1.125rem;">
+        </div>
+        <div class="flex-col gap-xs" id="otp-field" style="display:none;">
+          <label class="font-bold">One-time code</label>
+          <input type="text" id="login-otp" inputmode="numeric" maxlength="6" placeholder="Enter 6-digit code"
+                 style="padding:1rem; border-radius:var(--radius-md); border:2px solid var(--clr-border); font-size:1.125rem; letter-spacing:0.25em;">
+        </div>
+        <p id="login-status" class="text-muted" style="font-size:0.8125rem; text-align:center; margin:0;"></p>
+        <button id="btn-request-otp" class="btn btn-primary btn-lg" style="width:100%;">
+          Send Verification Code
+          <span class="material-symbols-rounded">mail</span>
+        </button>
+        <button id="btn-login" class="btn btn-primary btn-lg" style="width:100%; display:none;">
+          Verify &amp; Login
+          <span class="material-symbols-rounded">lock_open</span>
+        </button>
+        
     </div>
   `;
-
-  if (typeof gsap !== 'undefined') {
-    gsap.from(".login-card", {
-      y: 40,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power4.out"
-    });
-  }
-
 
   let requestedEmail = '';
   const emailInput = document.getElementById('login-email');
@@ -2225,25 +2047,20 @@ function renderOnboarding() {
   const container = document.getElementById('page-root');
   document.getElementById('sidebar').style.display = 'none';
   document.getElementById('header').style.display  = 'none';
-  const mc = document.getElementById('main-content');
-  mc.style.marginLeft = '0';
-  mc.style.marginTop  = '0';
-  mc.style.padding    = '0';
-  mc.style.maxWidth   = '100%';
-  mc.style.width      = '100%';
+  document.getElementById('main-content').style.marginLeft = '0';
+  document.getElementById('main-content').style.padding    = '0';
 
   container.innerHTML = `
-    <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at top right, var(--clr-primary-light), var(--clr-bg)); padding: var(--space-xl) var(--space-md);">
-      <div style="max-width: 640px; width: 100%; transform-style: preserve-3d;">
-        <div style="text-align:center; margin-bottom:var(--space-xl);">
-          <div class="sidebar-brand-icon" style="width:72px; height:72px; margin:0 auto var(--space-md); font-size:2.5rem; border-radius: 1.5rem; background: var(--clr-primary); color: white;">
-            <span class="material-symbols-rounded">health_and_safety</span>
-          </div>
-          <h2 style="font-size: 2rem; font-weight: 800; color: var(--clr-text); letter-spacing: -0.02em;">Set up your health profile</h2>
-          <p class="text-muted" style="font-size: 1.125rem;">This takes 2 minutes and personalises everything for you.</p>
+    <div style="max-width:560px; margin: 5vh auto; padding: var(--space-xl);">
+      <div style="text-align:center; margin-bottom:var(--space-xl);">
+        <div class="sidebar-brand-icon" style="width:64px;height:64px;margin:0 auto var(--space-md);font-size:2rem;">
+          <span class="material-symbols-rounded">health_and_safety</span>
         </div>
+        <h2>Set up your health profile</h2>
+        <p class="text-muted">This takes 2 minutes and personalises everything for you.</p>
+      </div>
 
-        <div class="card card-padded flex-col gap-md" style="background: var(--clr-surface-solid); border-radius: 2rem; box-shadow: var(--shadow-xl); padding: 3rem;">
+      <div class="card card-padded flex-col gap-md">
         <!-- Personal Info -->
         <div class="grid-2" style="gap:var(--space-md);">
           <div class="flex-col gap-xs">
@@ -2453,24 +2270,6 @@ function renderOnboarding() {
   document.getElementById('btn-ob-sync').onclick = handleDiscovery;
   document.getElementById('btn-ob-help').onclick = renderPairingGuide;
 
-  // Simulation Handler
-  document.body.addEventListener('click', async (e) => {
-    if (e.target.id === 'btn-ob-simulate' || e.target.closest('#btn-ob-simulate')) {
-      const modal = e.target.closest('.modal-overlay');
-      if (modal) modal.remove();
-      
-      const res = await window.BluetoothService.simulate();
-      if (res.success) {
-        document.getElementById('ob-sync-status').innerHTML = `
-          <div class="status-badge status-success" style="padding:0.5rem 1rem;">
-            <span class="material-symbols-rounded">check_circle</span>
-            Connected: ${res.name}
-          </div>
-        `;
-      }
-    }
-  });
-
   function renderPairingGuide() {
     // Prevent duplicates
     const existing = document.querySelector('.modal-overlay');
@@ -2515,13 +2314,6 @@ function renderOnboarding() {
 
         <button class="btn btn-primary" style="width:100%; margin-top:var(--space-lg);" onclick="this.closest('.modal-overlay').remove()">
           Got it, let's try again
-        </button>
-
-        <div class="divider" style="margin:var(--space-md) 0;"></div>
-        <p class="text-muted" style="font-size:0.75rem; text-align:center; margin-bottom:var(--space-sm);">No hardware handy? Try our simulator:</p>
-        <button id="btn-ob-simulate" class="btn btn-secondary" style="width:100%;">
-          <span class="material-symbols-rounded">science</span>
-          Launch Virtual Hardware Lab
         </button>
       </div>
     `;
