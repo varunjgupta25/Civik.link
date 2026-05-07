@@ -680,6 +680,13 @@ async def sitemap():
         return FileResponse(sitemap_path, media_type="application/xml")
     return FastAPIResponse(status_code=404)
 
+@app.get("/google406d89371bbd8320.html", include_in_schema=False)
+async def google_verification():
+    v_path = os.path.join(CLIENT_DIR, "google406d89371bbd8320.html")
+    if os.path.exists(v_path):
+        return FileResponse(v_path)
+    return FastAPIResponse(status_code=404)
+
 @app.exception_handler(404)
 async def custom_404_handler(request, exc):
     if request.url.path.startswith("/api/"):
