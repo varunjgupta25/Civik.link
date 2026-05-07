@@ -52,6 +52,8 @@ logger.setLevel(logging.INFO)
 
 CLIENT_DIR = os.path.join(BASE_DIR, "client")
 
+app = FastAPI(title="civik.link API", version="2.0.0")
+
 @app.get("/debug-fs", include_in_schema=False)
 async def debug_fs():
     return {
@@ -62,8 +64,6 @@ async def debug_fs():
         "client_contents": os.listdir(CLIENT_DIR) if os.path.exists(CLIENT_DIR) else None,
         "root_contents": os.listdir(BASE_DIR)
     }
-
-app = FastAPI(title="civik.link API", version="2.0.0")
 
 # Security
 SECRET_KEY = os.getenv("JWT_SECRET")
