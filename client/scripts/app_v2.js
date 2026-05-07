@@ -2229,16 +2229,17 @@ function renderOnboarding() {
   document.getElementById('main-content').style.padding    = '0';
 
   container.innerHTML = `
-    <div style="max-width:560px; margin: 5vh auto; padding: var(--space-xl);">
-      <div style="text-align:center; margin-bottom:var(--space-xl);">
-        <div class="sidebar-brand-icon" style="width:64px;height:64px;margin:0 auto var(--space-md);font-size:2rem;">
-          <span class="material-symbols-rounded">health_and_safety</span>
+    <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at top right, var(--clr-primary-light), var(--clr-bg)); padding: var(--space-xl) var(--space-md);">
+      <div style="max-width: 640px; width: 100%; transform-style: preserve-3d;">
+        <div style="text-align:center; margin-bottom:var(--space-xl);">
+          <div class="sidebar-brand-icon" style="width:72px; height:72px; margin:0 auto var(--space-md); font-size:2.5rem; border-radius: 1.5rem; background: var(--clr-primary); color: white;">
+            <span class="material-symbols-rounded">health_and_safety</span>
+          </div>
+          <h2 style="font-size: 2rem; font-weight: 800; color: var(--clr-text); letter-spacing: -0.02em;">Set up your health profile</h2>
+          <p class="text-muted" style="font-size: 1.125rem;">This takes 2 minutes and personalises everything for you.</p>
         </div>
-        <h2>Set up your health profile</h2>
-        <p class="text-muted">This takes 2 minutes and personalises everything for you.</p>
-      </div>
 
-      <div class="card card-padded flex-col gap-md">
+        <div class="card card-padded flex-col gap-md" style="background: var(--clr-surface-solid); border-radius: 2rem; box-shadow: var(--shadow-xl); padding: 3rem;">
         <!-- Personal Info -->
         <div class="grid-2" style="gap:var(--space-md);">
           <div class="flex-col gap-xs">
