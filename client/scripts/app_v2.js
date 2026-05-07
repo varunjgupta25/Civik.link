@@ -2225,8 +2225,12 @@ function renderOnboarding() {
   const container = document.getElementById('page-root');
   document.getElementById('sidebar').style.display = 'none';
   document.getElementById('header').style.display  = 'none';
-  document.getElementById('main-content').style.marginLeft = '0';
-  document.getElementById('main-content').style.padding    = '0';
+  const mc = document.getElementById('main-content');
+  mc.style.marginLeft = '0';
+  mc.style.marginTop  = '0';
+  mc.style.padding    = '0';
+  mc.style.maxWidth   = '100%';
+  mc.style.width      = '100%';
 
   container.innerHTML = `
     <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at top right, var(--clr-primary-light), var(--clr-bg)); padding: var(--space-xl) var(--space-md);">

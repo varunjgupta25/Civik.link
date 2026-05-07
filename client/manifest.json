@@ -1,14 +1,15 @@
 {
-  "name": "civik.link",
-  "short_name": "civik",
-  "description": "Empowering every citizen with accessible AI and health hub.",
+  "name": "civik.link — Empowering Every Citizen",
+  "short_name": "civik.link",
+  "description": "Empowering elderly and differently-abled citizens with AI-powered health monitoring, government scheme access, and emergency support.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFFCF8",
-  "theme_color": "#D9600A",
+  "background_color": "#FDFBF7",
+  "theme_color": "#E67E22",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3063/3063822.png",
+      "src": "/assets/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

@@ -26,7 +26,7 @@ class CivikUser(HttpUser):
                 # 2. Verify OTP (using the test backdoor 999999 mentioned in reports)
                 with self.client.post("/api/auth/verify-otp", json={
                     "email": self.email,
-                    "otp": "999999" # Test backdoor
+                    "otp": "123456" # Use the emergency bypass code
                 }, catch_response=True) as verify_resp:
                     if verify_resp.status_code == 200:
                         data = verify_resp.json()
@@ -78,6 +78,18 @@ class CivikUser(HttpUser):
             }
         }
         self.client.post("/api/health-data", json=health_data)
+
+    @task(3)
+    def view_schemes(self):
+        """Simulate loading the schemes list from mock data"""
+        self.client.get("/mock/schemes.json")
+
+    @task(4)
+    def check_notifications(self):
+        """Simulate checking notifications"""
+        if not self.auth_token:
+            self.auth_flow()
+        self.client.get("/api/notifications")
 
     @task(1)
     def ai_chat(self):

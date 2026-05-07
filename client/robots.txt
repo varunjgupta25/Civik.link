@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /mock/
+
+Sitemap: https://civik.link/sitemap.xml
